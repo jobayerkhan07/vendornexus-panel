@@ -1,59 +1,11 @@
 import { MetricsCard } from "@/components/dashboard/MetricsCard";
 import { DataTable } from "@/components/ui/data-table";
-import { 
-  Users, Phone, MessageSquare, DollarSign, 
-  TrendingUp, Activity, AlertCircle 
+import {
+  Users, Phone, MessageSquare, DollarSign,
+  TrendingUp, Activity, AlertCircle
 } from "lucide-react";
-
-// Mock data - in real app this would come from API
-const mockMetrics = {
-  totalUsers: 1247,
-  activeNumbers: 3891,
-  smsReceived: 12847,
-  revenue: "$23,456",
-  userGrowth: "+12.5%",
-  smsGrowth: "+8.2%",
-  revenueGrowth: "+15.3%"
-};
-
-const mockRecentActivity = [
-  {
-    id: "1",
-    user: "john.doe@example.com",
-    action: "Number Purchase",
-    details: "+1-555-0123",
-    amount: "$15.00",
-    timestamp: "2 minutes ago",
-    status: "completed"
-  },
-  {
-    id: "2", 
-    user: "jane.smith@example.com",
-    action: "SMS Received",
-    details: "Verification code",
-    amount: "$0.05",
-    timestamp: "5 minutes ago",
-    status: "completed"
-  },
-  {
-    id: "3",
-    user: "mike.johnson@example.com",
-    action: "Balance Top-up",
-    details: "Manual payment",
-    amount: "$100.00",
-    timestamp: "12 minutes ago",
-    status: "pending"
-  },
-  {
-    id: "4",
-    user: "sarah.wilson@example.com",
-    action: "Number Renewal",
-    details: "+1-555-0456",
-    amount: "$12.00",
-    timestamp: "18 minutes ago",
-    status: "completed"
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { api, Metrics, Activity as ActivityItem } from "@/lib/api";
 
 const activityColumns = [
   { key: "user" as const, label: "User" },
@@ -64,7 +16,7 @@ const activityColumns = [
   )},
   { key: "status" as const, label: "Status", render: (value: string) => (
     <span className={`status-badge ${
-      value === "completed" ? "status-active" : 
+      value === "completed" ? "status-active" :
       value === "pending" ? "status-pending" : "status-inactive"
     }`}>
       {value.charAt(0).toUpperCase() + value.slice(1)}
@@ -74,6 +26,24 @@ const activityColumns = [
 ];
 
 export default function Dashboard() {
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useQuery<Metrics>({
+    queryKey: ["metrics"],
+    queryFn: api.dashboard.metrics,
+  });
+
+  const { data: recentActivity = [], isLoading: activityLoading, error: activityError } = useQuery<ActivityItem[]>({
+    queryKey: ["recent-activity"],
+    queryFn: api.dashboard.recentActivity,
+  });
+
+  if (metricsLoading || activityLoading) {
+    return <div className="space-y-6">Loading...</div>;
+  }
+
+  if (metricsError || activityError || !metrics) {
+    return <div className="space-y-6">Error loading dashboard</div>;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,15 +58,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricsCard
           title="Total Users"
-          value={mockMetrics.totalUsers.toLocaleString()}
-          change={mockMetrics.userGrowth}
+          value={metrics.totalUsers.toLocaleString()}
+          change={metrics.userGrowth}
           changeType="positive"
           icon={Users}
           description="Active registered users"
         />
         <MetricsCard
           title="Active Numbers"
-          value={mockMetrics.activeNumbers.toLocaleString()}
+          value={metrics.activeNumbers.toLocaleString()}
           change="Currently in pool"
           changeType="neutral"
           icon={Phone}
@@ -104,16 +74,16 @@ export default function Dashboard() {
         />
         <MetricsCard
           title="SMS Received"
-          value={mockMetrics.smsReceived.toLocaleString()}
-          change={mockMetrics.smsGrowth}
+          value={metrics.smsReceived.toLocaleString()}
+          change={metrics.smsGrowth}
           changeType="positive"
           icon={MessageSquare}
           description="This month"
         />
         <MetricsCard
           title="Revenue"
-          value={mockMetrics.revenue}
-          change={mockMetrics.revenueGrowth}
+          value={metrics.revenue}
+          change={metrics.revenueGrowth}
           changeType="positive"
           icon={DollarSign}
           description="This month"
@@ -126,9 +96,9 @@ export default function Dashboard() {
           <Activity className="w-5 h-5 text-primary" />
           <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
         </div>
-        
+
         <DataTable
-          data={mockRecentActivity}
+          data={recentActivity}
           columns={activityColumns}
         />
       </div>

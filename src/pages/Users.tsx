@@ -1,124 +1,102 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, DollarSign } from "lucide-react";
-
-// Mock data
-const mockUsers = [
-  {
-    id: "1",
-    email: "john.doe@example.com",
-    name: "John Doe",
-    role: "User",
-    status: "active",
-    balance: 150.75,
-    lastActive: "2024-01-15",
-    smsCount: 245,
-    priceGroup: "Standard"
-  },
-  {
-    id: "2",
-    email: "jane.smith@example.com", 
-    name: "Jane Smith",
-    role: "Reseller",
-    status: "active",
-    balance: 2450.00,
-    lastActive: "2024-01-14",
-    smsCount: 1024,
-    priceGroup: "Premium"
-  },
-  {
-    id: "3",
-    email: "mike.johnson@example.com",
-    name: "Mike Johnson", 
-    role: "User",
-    status: "suspended",
-    balance: -25.50,
-    lastActive: "2024-01-10",
-    smsCount: 89,
-    priceGroup: "Basic"
-  },
-  {
-    id: "4",
-    email: "sarah.wilson@example.com",
-    name: "Sarah Wilson",
-    role: "User", 
-    status: "active",
-    balance: 89.25,
-    lastActive: "2024-01-15",
-    smsCount: 156,
-    priceGroup: "Standard"
-  }
-];
-
-const userColumns = [
-  { key: "name" as const, label: "Name" },
-  { key: "email" as const, label: "Email" },
-  { 
-    key: "role" as const, 
-    label: "Role",
-    render: (value: string) => (
-      <Badge variant={value === "Admin" ? "default" : value === "Reseller" ? "secondary" : "outline"}>
-        {value}
-      </Badge>
-    )
-  },
-  {
-    key: "status" as const,
-    label: "Status", 
-    render: (value: string) => (
-      <span className={`status-badge ${
-        value === "active" ? "status-active" : 
-        value === "suspended" ? "status-inactive" : "status-pending"
-      }`}>
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    )
-  },
-  {
-    key: "balance" as const,
-    label: "Balance",
-    render: (value: number) => (
-      <span className={`font-medium ${value < 0 ? "text-danger" : "text-foreground"}`}>
-        ${value.toFixed(2)}
-      </span>
-    )
-  },
-  { key: "smsCount" as const, label: "SMS Count" },
-  { key: "priceGroup" as const, label: "Price Group" },
-  { key: "lastActive" as const, label: "Last Active" },
-  {
-    key: "actions" as const,
-    label: "Actions",
-    render: (_, row: any) => (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm">
-          <Edit className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="sm">
-          <DollarSign className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="text-danger hover:text-danger">
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    )
-  }
-];
+import { api, User } from "@/lib/api";
 
 export default function Users() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const filteredUsers = mockUsers.filter(user =>
+  const { data: users = [], isLoading, error } = useQuery<User[]>({
+    queryKey: ["users"],
+    queryFn: api.users.list,
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: (id: string) => api.users.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+
+  const userColumns = [
+    { key: "name" as const, label: "Name" },
+    { key: "email" as const, label: "Email" },
+    {
+      key: "role" as const,
+      label: "Role",
+      render: (value: string) => (
+        <Badge variant={value === "Admin" ? "default" : value === "Reseller" ? "secondary" : "outline"}>
+          {value}
+        </Badge>
+      )
+    },
+    {
+      key: "status" as const,
+      label: "Status",
+      render: (value: string) => (
+        <span className={`status-badge ${
+          value === "active" ? "status-active" :
+          value === "suspended" ? "status-inactive" : "status-pending"
+        }`}>
+          {value.charAt(0).toUpperCase() + value.slice(1)}
+        </span>
+      )
+    },
+    {
+      key: "balance" as const,
+      label: "Balance",
+      render: (value: number) => (
+        <span className={`font-medium ${value < 0 ? "text-danger" : "text-foreground"}`}>
+          ${value.toFixed(2)}
+        </span>
+      )
+    },
+    { key: "smsCount" as const, label: "SMS Count" },
+    { key: "priceGroup" as const, label: "Price Group" },
+    { key: "lastActive" as const, label: "Last Active" },
+    {
+      key: "actions" as const,
+      label: "Actions",
+      render: (_: unknown, row: User) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm">
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm">
+            <DollarSign className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-danger hover:text-danger"
+            onClick={() => deleteUser.mutate(row.id)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  if (isLoading) {
+    return <div className="space-y-6">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="space-y-6">Error loading users</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -174,7 +152,7 @@ export default function Users() {
         pagination={{
           currentPage,
           totalPages,
-          onPageChange: setCurrentPage
+          onPageChange: setCurrentPage,
         }}
       />
     </div>

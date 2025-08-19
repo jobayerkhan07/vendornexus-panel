@@ -1,31 +1,26 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
-import { 
-  BarChart3, TrendingUp, DollarSign, Users, 
-  Download, Calendar, Filter 
+import {
+  BarChart3, TrendingUp, DollarSign, Users,
+  Download, Calendar, Filter
 } from "lucide-react";
-
-// Mock data for reports
-const mockRevenueData = [
-  { period: "Jan 2024", amount: 23456, growth: "+12.5%" },
-  { period: "Dec 2023", amount: 20845, growth: "+8.2%" },
-  { period: "Nov 2023", amount: 19234, growth: "+15.1%" },
-];
+import { api, RevenueRecord } from "@/lib/api";
 
 const revenueColumns = [
   { key: "period" as const, label: "Period" },
-  { 
-    key: "amount" as const, 
+  {
+    key: "amount" as const,
     label: "Revenue",
     render: (value: number) => (
       <span className="font-medium text-foreground">${value.toLocaleString()}</span>
     )
   },
-  { 
-    key: "growth" as const, 
+  {
+    key: "growth" as const,
     label: "Growth",
     render: (value: string) => (
       <span className={`font-medium ${value.startsWith('+') ? 'text-success' : 'text-danger'}`}>
@@ -38,6 +33,19 @@ const revenueColumns = [
 export default function Reports() {
   const [selectedReport, setSelectedReport] = useState("revenue");
   const [dateRange, setDateRange] = useState("last-3-months");
+
+  const { data: reportData = [], isLoading, error } = useQuery<RevenueRecord[]>({
+    queryKey: ["reports", selectedReport, dateRange],
+    queryFn: () => api.reports.revenue(selectedReport, dateRange),
+  });
+
+  if (isLoading) {
+    return <div className="space-y-6">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="space-y-6">Error loading reports</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -147,7 +155,7 @@ export default function Reports() {
 
       {/* Report Data */}
       <DataTable
-        data={mockRevenueData}
+        data={reportData}
         columns={revenueColumns}
       />
     </div>
