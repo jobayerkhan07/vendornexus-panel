@@ -1,110 +1,72 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, Download, MessageSquare, Eye } from "lucide-react";
-
-// Mock data
-const mockSMS = [
-  {
-    id: "1",
-    number: "+1-555-0123",
-    user: "john.doe@example.com",
-    message: "Your verification code is 123456",
-    sender: "Google",
-    receivedAt: "2024-01-15 14:32:45",
-    status: "delivered",
-    cost: "$0.05"
-  },
-  {
-    id: "2",
-    number: "+1-555-0456", 
-    user: "jane.smith@example.com",
-    message: "Welcome to our service! Click here to get started.",
-    sender: "ServiceCorp",
-    receivedAt: "2024-01-15 14:25:12",
-    status: "delivered",
-    cost: "$0.05"
-  },
-  {
-    id: "3",
-    number: "+1-555-0789",
-    user: "mike.johnson@example.com", 
-    message: "Your order #12345 has been shipped and is on its way.",
-    sender: "ShopNow",
-    receivedAt: "2024-01-15 13:45:32",
-    status: "delivered",
-    cost: "$0.05"
-  },
-  {
-    id: "4",
-    number: "+1-555-0321",
-    user: "sarah.wilson@example.com",
-    message: "Password reset request. If this wasn't you, ignore this message.",
-    sender: "SecureApp",
-    receivedAt: "2024-01-15 12:18:56",
-    status: "delivered", 
-    cost: "$0.05"
-  }
-];
-
-const smsColumns = [
-  { 
-    key: "number" as const, 
-    label: "Number",
-    render: (value: string) => (
-      <span className="font-mono text-foreground">{value}</span>
-    )
-  },
-  { key: "user" as const, label: "User" },
-  { key: "sender" as const, label: "Sender" },
-  { 
-    key: "message" as const, 
-    label: "Message",
-    render: (value: string) => (
-      <div className="max-w-xs truncate" title={value}>
-        {value}
-      </div>
-    )
-  },
-  { key: "receivedAt" as const, label: "Received At" },
-  {
-    key: "status" as const,
-    label: "Status",
-    render: (value: string) => (
-      <span className={`status-badge ${
-        value === "delivered" ? "status-active" : 
-        value === "failed" ? "status-inactive" : "status-pending"
-      }`}>
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    )
-  },
-  { 
-    key: "cost" as const, 
-    label: "Cost",
-    render: (value: string) => (
-      <span className="font-medium text-foreground">{value}</span>
-    )
-  },
-  {
-    key: "actions" as const,
-    label: "Actions",
-    render: (_, row: any) => (
-      <Button variant="ghost" size="sm" title="View Details">
-        <Eye className="w-4 h-4" />
-      </Button>
-    )
-  }
-];
+import { Search, Download, Eye } from "lucide-react";
+import { api, SMSMessage } from "@/lib/api";
 
 export default function SMS() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const filteredSMS = mockSMS.filter(sms =>
+  const { data: messages = [], isLoading, error } = useQuery<SMSMessage[]>({
+    queryKey: ["sms"],
+    queryFn: api.sms.list,
+  });
+
+  const smsColumns = [
+    {
+      key: "number" as const,
+      label: "Number",
+      render: (value: string) => (
+        <span className="font-mono text-foreground">{value}</span>
+      )
+    },
+    { key: "user" as const, label: "User" },
+    { key: "sender" as const, label: "Sender" },
+    {
+      key: "message" as const,
+      label: "Message",
+      render: (value: string) => (
+        <div className="max-w-xs truncate" title={value}>
+          {value}
+        </div>
+      )
+    },
+    { key: "receivedAt" as const, label: "Received At" },
+    {
+      key: "status" as const,
+      label: "Status",
+      render: (value: string) => (
+        <span className={`status-badge ${
+          value === "delivered" ? "status-active" :
+          value === "failed" ? "status-inactive" : "status-pending"
+        }`}>
+          {value.charAt(0).toUpperCase() + value.slice(1)}
+        </span>
+      )
+    },
+    {
+      key: "cost" as const,
+      label: "Cost",
+      render: (value: string) => (
+        <span className="font-medium text-foreground">{value}</span>
+      )
+    },
+    {
+      key: "actions" as const,
+      label: "Actions",
+      render: () => (
+        <Button variant="ghost" size="sm" title="View Details">
+          <Eye className="w-4 h-4" />
+        </Button>
+      )
+    }
+  ];
+
+  const filteredSMS = messages.filter(sms =>
     sms.number.includes(searchTerm) ||
     sms.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
     sms.sender.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,6 +74,14 @@ export default function SMS() {
   );
 
   const totalPages = Math.ceil(filteredSMS.length / itemsPerPage);
+
+  if (isLoading) {
+    return <div className="space-y-6">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="space-y-6">Error loading SMS</div>;
+  }
 
   return (
     <div className="space-y-6">

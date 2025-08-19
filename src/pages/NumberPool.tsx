@@ -1,111 +1,81 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Upload, Download, Eye } from "lucide-react";
-
-// Mock data
-const mockNumbers = [
-  {
-    id: "1",
-    number: "+1-555-0123",
-    vendor: "Twilio",
-    user: "john.doe@example.com",
-    purchaseDate: "2024-01-10",
-    expiryDate: "2024-02-10",
-    status: "active",
-    smsReceived: 15,
-    cost: "$15.00"
-  },
-  {
-    id: "2", 
-    number: "+1-555-0456",
-    vendor: "MessageBird",
-    user: "jane.smith@example.com",
-    purchaseDate: "2024-01-12",
-    expiryDate: "2024-02-12", 
-    status: "active",
-    smsReceived: 8,
-    cost: "$12.00"
-  },
-  {
-    id: "3",
-    number: "+1-555-0789",
-    vendor: "Twilio",
-    user: "-",
-    purchaseDate: "2024-01-08",
-    expiryDate: "2024-01-20",
-    status: "expired",
-    smsReceived: 0,
-    cost: "$15.00"
-  },
-  {
-    id: "4",
-    number: "+1-555-0321",
-    vendor: "Plivo",
-    user: "mike.johnson@example.com",
-    purchaseDate: "2024-01-14",
-    expiryDate: "2024-02-14",
-    status: "active", 
-    smsReceived: 23,
-    cost: "$10.00"
-  }
-];
-
-const numberColumns = [
-  { key: "number" as const, label: "Phone Number", render: (value: string) => (
-    <span className="font-mono text-foreground">{value}</span>
-  )},
-  { key: "vendor" as const, label: "Vendor" },
-  { key: "user" as const, label: "Assigned User" },
-  { key: "purchaseDate" as const, label: "Purchase Date" },
-  { key: "expiryDate" as const, label: "Expiry Date" },
-  {
-    key: "status" as const,
-    label: "Status",
-    render: (value: string) => (
-      <span className={`status-badge ${
-        value === "active" ? "status-active" : 
-        value === "expired" ? "status-inactive" : "status-pending"
-      }`}>
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    )
-  },
-  { key: "smsReceived" as const, label: "SMS Count" },
-  { 
-    key: "cost" as const, 
-    label: "Cost",
-    render: (value: string) => (
-      <span className="font-medium text-foreground">{value}</span>
-    )
-  },
-  {
-    key: "actions" as const,
-    label: "Actions", 
-    render: (_, row: any) => (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm">
-          <Eye className="w-4 h-4" />
-        </Button>
-      </div>
-    )
-  }
-];
+import { api, NumberItem } from "@/lib/api";
 
 export default function NumberPool() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const filteredNumbers = mockNumbers.filter(number =>
+  const { data: numbers = [], isLoading, error } = useQuery<NumberItem[]>({
+    queryKey: ["numbers"],
+    queryFn: api.numbers.list,
+  });
+
+  const numberColumns = [
+    {
+      key: "number" as const,
+      label: "Phone Number",
+      render: (value: string) => (
+        <span className="font-mono text-foreground">{value}</span>
+      )
+    },
+    { key: "vendor" as const, label: "Vendor" },
+    { key: "user" as const, label: "Assigned User" },
+    { key: "purchaseDate" as const, label: "Purchase Date" },
+    { key: "expiryDate" as const, label: "Expiry Date" },
+    {
+      key: "status" as const,
+      label: "Status",
+      render: (value: string) => (
+        <span className={`status-badge ${
+          value === "active" ? "status-active" :
+          value === "expired" ? "status-inactive" : "status-pending"
+        }`}>
+          {value.charAt(0).toUpperCase() + value.slice(1)}
+        </span>
+      )
+    },
+    { key: "smsReceived" as const, label: "SMS Count" },
+    {
+      key: "cost" as const,
+      label: "Cost",
+      render: (value: string) => (
+        <span className="font-medium text-foreground">{value}</span>
+      )
+    },
+    {
+      key: "actions" as const,
+      label: "Actions",
+      render: () => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm">
+            <Eye className="w-4 h-4" />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  const filteredNumbers = numbers.filter(number =>
     number.number.includes(searchTerm) ||
     number.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
     number.user.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredNumbers.length / itemsPerPage);
+
+  if (isLoading) {
+    return <div className="space-y-6">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="space-y-6">Error loading numbers</div>;
+  }
 
   return (
     <div className="space-y-6">
