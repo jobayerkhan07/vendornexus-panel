@@ -1,0 +1,139 @@
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import {
+  Users, UserCog, DollarSign, Building2, Phone, 
+  Settings, Mail, MessageSquare, BarChart3, 
+  Shield, CreditCard, Zap, Database, Globe
+} from "lucide-react";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+// Mock user role - in real app this would come from auth context
+const currentUserRole = "Admin"; // Admin, Reseller, User
+
+const getMenuItems = (role: string) => {
+  const baseItems = [];
+
+  if (role === "Admin") {
+    baseItems.push(
+      { title: "Dashboard", url: "/", icon: BarChart3 },
+      { title: "User Roles", url: "/user-roles", icon: Shield },
+      { title: "Users", url: "/users", icon: Users },
+      { title: "Vendors", url: "/vendors", icon: Building2 },
+      { title: "Number Pool", url: "/number-pool", icon: Phone },
+      { title: "Payment Gateway", url: "/payments", icon: CreditCard },
+      { title: "SMTP", url: "/smtp", icon: Mail },
+      { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
+      { title: "SMS", url: "/sms", icon: MessageSquare },
+      { title: "Reports", url: "/reports", icon: BarChart3 }
+    );
+  } else if (role === "Reseller") {
+    baseItems.push(
+      { title: "Dashboard", url: "/", icon: BarChart3 },
+      { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
+      { title: "Users", url: "/users", icon: Users },
+      { title: "Vendors", url: "/vendors", icon: Building2 },
+      { title: "Number Pool", url: "/number-pool", icon: Phone },
+      { title: "SMTP", url: "/smtp", icon: Mail },
+      { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
+      { title: "SMS", url: "/sms", icon: MessageSquare },
+      { title: "Reports", url: "/reports", icon: BarChart3 }
+    );
+  } else { // User
+    baseItems.push(
+      { title: "Dashboard", url: "/", icon: BarChart3 },
+      { title: "Number Pool", url: "/number-pool", icon: Phone },
+      { title: "Vendor APIs", url: "/vendor-apis", icon: Globe },
+      { title: "SMS", url: "/sms", icon: MessageSquare },
+      { title: "Reports", url: "/reports", icon: BarChart3 }
+    );
+  }
+
+  return baseItems;
+};
+
+export function AppSidebar() {
+  const { state } = useSidebar();
+  const location = useLocation();
+  const currentPath = location.pathname;
+  
+  const menuItems = getMenuItems(currentUserRole);
+  const collapsed = state === "collapsed";
+  
+  const isActive = (path: string) => {
+    if (path === "/" && currentPath === "/") return true;
+    if (path !== "/" && currentPath.startsWith(path)) return true;
+    return false;
+  };
+
+  const getNavClasses = (path: string) => {
+    const base = "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors";
+    return isActive(path) 
+      ? `${base} bg-primary text-primary-foreground` 
+      : `${base} text-muted-foreground hover:text-foreground hover:bg-muted`;
+  };
+
+  return (
+    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
+      <SidebarContent className="bg-card border-r border-border">
+        {/* Logo */}
+        <div className="p-4 border-b border-border">
+          {!collapsed ? (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Zap className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <span className="font-semibold text-lg">WebHook Panel</span>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Zap className="w-4 h-4 text-primary-foreground" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+            Navigation
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1 p-2">
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavClasses(item.url)}>
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* User Role Badge */}
+        {!collapsed && (
+          <div className="mt-auto p-4 border-t border-border">
+            <div className="bg-muted rounded-lg p-3">
+              <div className="text-sm font-medium text-foreground">{currentUserRole}</div>
+              <div className="text-xs text-muted-foreground">Current Role</div>
+            </div>
+          </div>
+        )}
+      </SidebarContent>
+    </Sidebar>
+  );
+}
