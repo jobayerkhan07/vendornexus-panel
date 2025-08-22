@@ -1,57 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Upload, Download, Eye } from "lucide-react";
+import { getNumbers, NumberRecord } from "@/api/numbers";
 
-// Mock data
-const mockNumbers = [
-  {
-    id: "1",
-    number: "+1-555-0123",
-    vendor: "Twilio",
-    user: "john.doe@example.com",
-    purchaseDate: "2024-01-10",
-    expiryDate: "2024-02-10",
-    status: "active",
-    smsReceived: 15,
-    cost: "$15.00"
-  },
-  {
-    id: "2", 
-    number: "+1-555-0456",
-    vendor: "MessageBird",
-    user: "jane.smith@example.com",
-    purchaseDate: "2024-01-12",
-    expiryDate: "2024-02-12", 
-    status: "active",
-    smsReceived: 8,
-    cost: "$12.00"
-  },
-  {
-    id: "3",
-    number: "+1-555-0789",
-    vendor: "Twilio",
-    user: "-",
-    purchaseDate: "2024-01-08",
-    expiryDate: "2024-01-20",
-    status: "expired",
-    smsReceived: 0,
-    cost: "$15.00"
-  },
-  {
-    id: "4",
-    number: "+1-555-0321",
-    vendor: "Plivo",
-    user: "mike.johnson@example.com",
-    purchaseDate: "2024-01-14",
-    expiryDate: "2024-02-14",
-    status: "active", 
-    smsReceived: 23,
-    cost: "$10.00"
-  }
-];
+// Fetch numbers from API and filter expired entries
 
 const numberColumns = [
   { key: "number" as const, label: "Phone Number", render: (value: string) => (
@@ -66,7 +20,7 @@ const numberColumns = [
     label: "Status",
     render: (value: string) => (
       <span className={`status-badge ${
-        value === "active" ? "status-active" : 
+        value === "active" ? "status-active" :
         value === "expired" ? "status-inactive" : "status-pending"
       }`}>
         {value.charAt(0).toUpperCase() + value.slice(1)}
@@ -74,8 +28,8 @@ const numberColumns = [
     )
   },
   { key: "smsReceived" as const, label: "SMS Count" },
-  { 
-    key: "cost" as const, 
+  {
+    key: "cost" as const,
     label: "Cost",
     render: (value: string) => (
       <span className="font-medium text-foreground">{value}</span>
@@ -83,7 +37,7 @@ const numberColumns = [
   },
   {
     key: "actions" as const,
-    label: "Actions", 
+    label: "Actions",
     render: (_, row: any) => (
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm">
@@ -97,13 +51,30 @@ const numberColumns = [
 export default function NumberPool() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [numbers, setNumbers] = useState<NumberRecord[]>([]);
   const itemsPerPage = 10;
 
-  const filteredNumbers = mockNumbers.filter(number =>
-    number.number.includes(searchTerm) ||
-    number.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    number.user.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      const data = await getNumbers();
+      if (mounted) setNumbers(data);
+    };
+    load();
+    const interval = setInterval(load, 60 * 1000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const filteredNumbers = numbers
+    .filter((n) => !n.expired)
+    .filter(number =>
+      number.number.includes(searchTerm) ||
+      number.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      number.user.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const totalPages = Math.ceil(filteredNumbers.length / itemsPerPage);
 
