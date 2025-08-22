@@ -30,8 +30,6 @@ const getMenuItems = (role: string) => {
       { title: "User Roles", url: "/user-roles", icon: Shield },
       { title: "Users", url: "/users", icon: Users },
       { title: "Vendors", url: "/vendors", icon: Building2 },
-      { title: "Vendor APIs", url: "/vendor-apis", icon: Globe },
-      { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
       { title: "Number Pool", url: "/number-pool", icon: Phone },
       { title: "Payment Gateway", url: "/payments", icon: CreditCard },
       { title: "SMTP", url: "/smtp", icon: Mail },

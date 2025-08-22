@@ -1,116 +1,138 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, Settings, Zap } from "lucide-react";
-import { api, Vendor } from "@/lib/api";
+
+// Mock data
+const mockVendors = [
+  {
+    id: "1",
+    name: "Twilio",
+    type: "API",
+    status: "active",
+    purchasePrice: "$15.00",
+    inboundPrice: "$0.05",
+    numbersAvailable: 1250,
+    totalPurchased: 3456,
+    lastSync: "2024-01-15 14:30:00"
+  },
+  {
+    id: "2",
+    name: "MessageBird",
+    type: "API", 
+    status: "active",
+    purchasePrice: "$12.00",
+    inboundPrice: "$0.04",
+    numbersAvailable: 890,
+    totalPurchased: 2134,
+    lastSync: "2024-01-15 14:25:00"
+  },
+  {
+    id: "3",
+    name: "Plivo",
+    type: "Manual",
+    status: "active",
+    purchasePrice: "$10.00", 
+    inboundPrice: "$0.03",
+    numbersAvailable: 456,
+    totalPurchased: 1678,
+    lastSync: "-"
+  },
+  {
+    id: "4",
+    name: "Vonage",
+    type: "API",
+    status: "inactive",
+    purchasePrice: "$18.00",
+    inboundPrice: "$0.06",
+    numbersAvailable: 0,
+    totalPurchased: 234,
+    lastSync: "2024-01-12 09:15:00"
+  }
+];
+
+const vendorColumns = [
+  { 
+    key: "name" as const, 
+    label: "Vendor Name",
+    render: (value: string, row: any) => (
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+          <Zap className="w-4 h-4 text-primary" />
+        </div>
+        <span className="font-medium">{value}</span>
+      </div>
+    )
+  },
+  {
+    key: "type" as const,
+    label: "Type",
+    render: (value: string) => (
+      <Badge variant={value === "API" ? "default" : "secondary"}>
+        {value}
+      </Badge>
+    )
+  },
+  {
+    key: "status" as const,
+    label: "Status",
+    render: (value: string) => (
+      <span className={`status-badge ${
+        value === "active" ? "status-active" : "status-inactive"
+      }`}>
+        {value.charAt(0).toUpperCase() + value.slice(1)}
+      </span>
+    )
+  },
+  { 
+    key: "purchasePrice" as const, 
+    label: "Purchase Price",
+    render: (value: string) => (
+      <span className="font-medium text-foreground">{value}</span>
+    )
+  },
+  { 
+    key: "inboundPrice" as const, 
+    label: "Inbound SMS Price",
+    render: (value: string) => (
+      <span className="font-medium text-foreground">{value}</span>
+    )
+  },
+  { key: "numbersAvailable" as const, label: "Available" },
+  { key: "totalPurchased" as const, label: "Total Purchased" },
+  { key: "lastSync" as const, label: "Last Sync" },
+  {
+    key: "actions" as const,
+    label: "Actions",
+    render: (_, row: any) => (
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm">
+          <Settings className="w-4 h-4" />
+        </Button>
+        <Button variant="ghost" size="sm">
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button variant="ghost" size="sm" className="text-danger hover:text-danger">
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    )
+  }
+];
 
 export default function Vendors() {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: vendors = [], isLoading, error } = useQuery<Vendor[]>({
-    queryKey: ["vendors"],
-    queryFn: api.vendors.list,
-  });
-
-  const deleteVendor = useMutation({
-    mutationFn: (id: string) => api.vendors.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vendors"] }),
-  });
-
-  const vendorColumns = [
-    {
-      key: "name" as const,
-      label: "Vendor Name",
-      render: (value: string) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Zap className="w-4 h-4 text-primary" />
-          </div>
-          <span className="font-medium">{value}</span>
-        </div>
-      )
-    },
-    {
-      key: "type" as const,
-      label: "Type",
-      render: (value: string) => (
-        <Badge variant={value === "API" ? "default" : "secondary"}>
-          {value}
-        </Badge>
-      )
-    },
-    {
-      key: "status" as const,
-      label: "Status",
-      render: (value: string) => (
-        <span className={`status-badge ${
-          value === "active" ? "status-active" : "status-inactive"
-        }`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      )
-    },
-    {
-      key: "purchasePrice" as const,
-      label: "Purchase Price",
-      render: (value: string) => (
-        <span className="font-medium text-foreground">{value}</span>
-      )
-    },
-    {
-      key: "inboundPrice" as const,
-      label: "Inbound SMS Price",
-      render: (value: string) => (
-        <span className="font-medium text-foreground">{value}</span>
-      )
-    },
-    { key: "numbersAvailable" as const, label: "Available" },
-    { key: "totalPurchased" as const, label: "Total Purchased" },
-    { key: "lastSync" as const, label: "Last Sync" },
-    {
-      key: "actions" as const,
-      label: "Actions",
-      render: (_: unknown, row: Vendor) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            <Settings className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-danger hover:text-danger"
-            onClick={() => deleteVendor.mutate(row.id)}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      )
-    }
-  ];
-
-  const filteredVendors = vendors.filter(vendor =>
+  const filteredVendors = mockVendors.filter(vendor =>
     vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     vendor.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredVendors.length / itemsPerPage);
-
-  if (isLoading) {
-    return <div className="space-y-6">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="space-y-6">Error loading vendors</div>;
-  }
 
   return (
     <div className="space-y-6">
@@ -166,7 +188,7 @@ export default function Vendors() {
         pagination={{
           currentPage,
           totalPages,
-          onPageChange: setCurrentPage,
+          onPageChange: setCurrentPage
         }}
       />
     </div>
