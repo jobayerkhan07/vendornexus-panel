@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Users, UserCog, DollarSign, Building2, Phone, 
   Settings, Mail, MessageSquare, BarChart3, 
-  Shield, CreditCard, Zap, Database, Globe
+  Shield, CreditCard, Zap, Database, Globe, User
 } from "lucide-react";
 
 import {
@@ -35,7 +35,9 @@ const getMenuItems = (role: string) => {
       { title: "SMTP", url: "/smtp", icon: Mail },
       { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
       { title: "SMS", url: "/sms", icon: MessageSquare },
-      { title: "Reports", url: "/reports", icon: BarChart3 }
+      { title: "Reports", url: "/reports", icon: BarChart3 },
+      { title: "Profile", url: "/profile", icon: User },
+      { title: "Settings", url: "/settings", icon: Settings }
     );
   } else if (role === "Reseller") {
     baseItems.push(
@@ -47,7 +49,9 @@ const getMenuItems = (role: string) => {
       { title: "SMTP", url: "/smtp", icon: Mail },
       { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
       { title: "SMS", url: "/sms", icon: MessageSquare },
-      { title: "Reports", url: "/reports", icon: BarChart3 }
+      { title: "Reports", url: "/reports", icon: BarChart3 },
+      { title: "Profile", url: "/profile", icon: User },
+      { title: "Settings", url: "/settings", icon: Settings }
     );
   } else { // User
     baseItems.push(
@@ -55,7 +59,9 @@ const getMenuItems = (role: string) => {
       { title: "Number Pool", url: "/number-pool", icon: Phone },
       { title: "Vendor APIs", url: "/vendor-apis", icon: Globe },
       { title: "SMS", url: "/sms", icon: MessageSquare },
-      { title: "Reports", url: "/reports", icon: BarChart3 }
+      { title: "Reports", url: "/reports", icon: BarChart3 },
+      { title: "Profile", url: "/profile", icon: User },
+      { title: "Settings", url: "/settings", icon: Settings }
     );
   }
 

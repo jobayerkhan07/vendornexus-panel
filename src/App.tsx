@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -17,34 +18,101 @@ import PaymentGateway from "./pages/PaymentGateway";
 import SMTP from "./pages/SMTP";
 import Campaigns from "./pages/Campaigns";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppLayout>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/user-roles" element={<UserRoles />} />
-            <Route path="/sell-price-groups" element={<SellPriceGroups />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/vendors" element={<Vendors />} />
-            <Route path="/number-pool" element={<NumberPool />} />
-            <Route path="/vendor-apis" element={<VendorAPIs />} />
-            <Route path="/payments" element={<PaymentGateway />} />
-            <Route path="/smtp" element={<SMTP />} />
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/sms" element={<SMS />} />
-            <Route path="/reports" element={<Reports />} />
+            {/* Auth Routes */}
+            <Route path="/auth/login" element={<Login />} />
+            <Route path="/auth/register" element={<Register />} />
+            
+            {/* Protected Routes */}
+            <Route path="/" element={
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
+            } />
+            <Route path="/profile" element={
+              <AppLayout>
+                <Profile />
+              </AppLayout>
+            } />
+            <Route path="/settings" element={
+              <AppLayout>
+                <Settings />
+              </AppLayout>
+            } />
+            <Route path="/user-roles" element={
+              <AppLayout>
+                <UserRoles />
+              </AppLayout>
+            } />
+            <Route path="/sell-price-groups" element={
+              <AppLayout>
+                <SellPriceGroups />
+              </AppLayout>
+            } />
+            <Route path="/users" element={
+              <AppLayout>
+                <Users />
+              </AppLayout>
+            } />
+            <Route path="/vendors" element={
+              <AppLayout>
+                <Vendors />
+              </AppLayout>
+            } />
+            <Route path="/number-pool" element={
+              <AppLayout>
+                <NumberPool />
+              </AppLayout>
+            } />
+            <Route path="/vendor-apis" element={
+              <AppLayout>
+                <VendorAPIs />
+              </AppLayout>
+            } />
+            <Route path="/payments" element={
+              <AppLayout>
+                <PaymentGateway />
+              </AppLayout>
+            } />
+            <Route path="/smtp" element={
+              <AppLayout>
+                <SMTP />
+              </AppLayout>
+            } />
+            <Route path="/campaigns" element={
+              <AppLayout>
+                <Campaigns />
+              </AppLayout>
+            } />
+            <Route path="/sms" element={
+              <AppLayout>
+                <SMS />
+              </AppLayout>
+            } />
+            <Route path="/reports" element={
+              <AppLayout>
+                <Reports />
+              </AppLayout>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AppLayout>
-      </BrowserRouter>
-    </TooltipProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
