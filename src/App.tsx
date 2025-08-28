@@ -13,6 +13,10 @@ import Vendors from "./pages/Vendors";
 import Reports from "./pages/Reports";
 import UserRoles from "./pages/UserRoles";
 import SellPriceGroups from "./pages/SellPriceGroups";
+import PermissionGroups from "./pages/PermissionGroups";
+import CreateUser from "./pages/CreateUser";
+import UserPermissions from "./pages/UserPermissions";
+import SystemPermissions from "./pages/SystemPermissions";
 import VendorAPIs from "./pages/VendorAPIs";
 import PaymentGateway from "./pages/PaymentGateway";
 import SMTP from "./pages/SMTP";
@@ -56,6 +60,26 @@ const App = () => (
             <Route path="/user-roles" element={
               <AppLayout>
                 <UserRoles />
+              </AppLayout>
+            } />
+            <Route path="/permission-groups" element={
+              <AppLayout>
+                <PermissionGroups />
+              </AppLayout>
+            } />
+            <Route path="/user-permissions" element={
+              <AppLayout>
+                <UserPermissions />
+              </AppLayout>
+            } />
+            <Route path="/system-permissions" element={
+              <AppLayout>
+                <SystemPermissions />
+              </AppLayout>
+            } />
+            <Route path="/users/create" element={
+              <AppLayout>
+                <CreateUser />
               </AppLayout>
             } />
             <Route path="/sell-price-groups" element={

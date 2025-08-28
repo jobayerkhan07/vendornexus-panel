@@ -3,7 +3,8 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Users, UserCog, DollarSign, Building2, Phone, 
   Settings, Mail, MessageSquare, BarChart3, 
-  Shield, CreditCard, Zap, Database, Globe, User
+  Shield, CreditCard, Zap, Database, Globe, User,
+  Key, UserX
 } from "lucide-react";
 
 import {
@@ -19,15 +20,35 @@ import {
 } from "@/components/ui/sidebar";
 
 // Mock user role - in real app this would come from auth context
-const currentUserRole = "Admin"; // Admin, Reseller, User
+const currentUserRole = "Admin"; // Super Admin, Admin, Reseller, User
 
 const getMenuItems = (role: string) => {
   const baseItems = [];
 
-  if (role === "Admin") {
+  if (role === "Super Admin") {
     baseItems.push(
       { title: "Dashboard", url: "/", icon: BarChart3 },
       { title: "User Roles", url: "/user-roles", icon: Shield },
+      { title: "Permission Groups", url: "/permission-groups", icon: UserX },
+      { title: "User Permissions", url: "/user-permissions", icon: Key },
+      { title: "System Permissions", url: "/system-permissions", icon: Database },
+      { title: "Users", url: "/users", icon: Users },
+      { title: "Vendors", url: "/vendors", icon: Building2 },
+      { title: "Number Pool", url: "/number-pool", icon: Phone },
+      { title: "Payment Gateway", url: "/payments", icon: CreditCard },
+      { title: "SMTP", url: "/smtp", icon: Mail },
+      { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
+      { title: "SMS", url: "/sms", icon: MessageSquare },
+      { title: "Reports", url: "/reports", icon: BarChart3 },
+      { title: "Profile", url: "/profile", icon: User },
+      { title: "Settings", url: "/settings", icon: Settings }
+    );
+  } else if (role === "Admin") {
+    baseItems.push(
+      { title: "Dashboard", url: "/", icon: BarChart3 },
+      { title: "User Roles", url: "/user-roles", icon: Shield },
+      { title: "Permission Groups", url: "/permission-groups", icon: UserX },
+      { title: "User Permissions", url: "/user-permissions", icon: Key },
       { title: "Users", url: "/users", icon: Users },
       { title: "Vendors", url: "/vendors", icon: Building2 },
       { title: "Number Pool", url: "/number-pool", icon: Phone },
@@ -43,6 +64,7 @@ const getMenuItems = (role: string) => {
     baseItems.push(
       { title: "Dashboard", url: "/", icon: BarChart3 },
       { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
+      { title: "Permission Groups", url: "/permission-groups", icon: UserX },
       { title: "Users", url: "/users", icon: Users },
       { title: "Vendors", url: "/vendors", icon: Building2 },
       { title: "Number Pool", url: "/number-pool", icon: Phone },
@@ -53,7 +75,7 @@ const getMenuItems = (role: string) => {
       { title: "Profile", url: "/profile", icon: User },
       { title: "Settings", url: "/settings", icon: Settings }
     );
-  } else { // User
+  } else { // User/Client
     baseItems.push(
       { title: "Dashboard", url: "/", icon: BarChart3 },
       { title: "Number Pool", url: "/number-pool", icon: Phone },

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, DollarSign } from "lucide-react";
+import { Link } from "react-router-dom";
 
 // Mock data
 const mockUsers = [
@@ -128,10 +129,12 @@ export default function Users() {
           <h1 className="text-3xl font-bold text-foreground">Users</h1>
           <p className="text-muted-foreground">Manage user accounts and permissions</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add User
-        </Button>
+        <Link to="/users/create">
+          <Button className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add User
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Cards */}
