@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Upload, Download, Eye } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data
 const mockNumbers = [
@@ -53,51 +54,91 @@ const mockNumbers = [
   }
 ];
 
-const numberColumns = [
-  { key: "number" as const, label: "Phone Number", render: (value: string) => (
-    <span className="font-mono text-foreground">{value}</span>
-  )},
-  { key: "vendor" as const, label: "Vendor" },
-  { key: "user" as const, label: "Assigned User" },
-  { key: "purchaseDate" as const, label: "Purchase Date" },
-  { key: "expiryDate" as const, label: "Expiry Date" },
-  {
-    key: "status" as const,
-    label: "Status",
-    render: (value: string) => (
-      <span className={`status-badge ${
-        value === "active" ? "status-active" : 
-        value === "expired" ? "status-inactive" : "status-pending"
-      }`}>
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    )
-  },
-  { key: "smsReceived" as const, label: "SMS Count" },
-  { 
-    key: "cost" as const, 
-    label: "Cost",
-    render: (value: string) => (
-      <span className="font-medium text-foreground">{value}</span>
-    )
-  },
-  {
-    key: "actions" as const,
-    label: "Actions", 
-    render: (_, row: any) => (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm">
-          <Eye className="w-4 h-4" />
-        </Button>
-      </div>
-    )
-  }
-];
-
 export default function NumberPool() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const { toast } = useToast();
+
+  const handleAddNumber = () => {
+    toast({
+      title: "Add Number",
+      description: "Add number functionality would open here",
+    });
+  };
+
+  const handleBulkUpload = () => {
+    toast({
+      title: "Bulk Upload",
+      description: "Bulk upload functionality would open here",
+    });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Export Data",
+      description: "Export functionality would start here",
+    });
+  };
+
+  const handleView = (number: any) => {
+    toast({
+      title: "View Number",
+      description: `Details for ${number.number} would open here`,
+    });
+  };
+
+  const ActionButtons = ({ row }: { row: any }) => {
+    return (
+      <div className="flex items-center gap-1">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => handleView(row)}
+          className="h-8 w-8 p-0"
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  const numberColumns = [
+    { key: "number" as const, label: "Phone Number", render: (value: string) => (
+      <span className="font-mono text-foreground text-sm">{value}</span>
+    )},
+    { key: "vendor" as const, label: "Vendor" },
+    { key: "user" as const, label: "Assigned User" },
+    { key: "purchaseDate" as const, label: "Purchase Date" },
+    { key: "expiryDate" as const, label: "Expiry Date" },
+    {
+      key: "status" as const,
+      label: "Status",
+      render: (value: string) => (
+        <span className={`status-badge ${
+          value === "active" ? "status-active" : 
+          value === "expired" ? "status-inactive" : "status-pending"
+        }`}>
+          {value.charAt(0).toUpperCase() + value.slice(1)}
+        </span>
+      )
+    },
+    { key: "smsReceived" as const, label: "SMS Count" },
+    { 
+      key: "cost" as const, 
+      label: "Cost",
+      render: (value: string) => (
+        <span className="font-medium text-foreground">{value}</span>
+      )
+    },
+    {
+      key: "actions" as const,
+      label: "Actions", 
+      render: (_, row: any) => (
+        <ActionButtons row={row} />
+      )
+    }
+  ];
 
   const filteredNumbers = mockNumbers.filter(number =>
     number.number.includes(searchTerm) ||
@@ -108,19 +149,19 @@ export default function NumberPool() {
   const totalPages = Math.ceil(filteredNumbers.length / itemsPerPage);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Number Pool</h1>
-          <p className="text-muted-foreground">Manage phone numbers and assignments</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Number Pool</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Manage phone numbers and assignments</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={handleBulkUpload} className="gap-2 w-full sm:w-auto">
             <Upload className="w-4 h-4" />
             Bulk Upload
           </Button>
-          <Button className="gap-2">
+          <Button onClick={handleAddNumber} className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Add Number
           </Button>
@@ -128,28 +169,28 @@ export default function NumberPool() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-foreground">3,891</div>
-          <div className="text-sm text-muted-foreground">Total Numbers</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-foreground">3,891</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Total Numbers</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-success">3,456</div>
-          <div className="text-sm text-muted-foreground">Active Numbers</div>
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-success">3,456</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Active Numbers</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-warning">289</div>
-          <div className="text-sm text-muted-foreground">Expiring Soon</div>
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-warning">289</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Expiring Soon</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-danger">146</div>
-          <div className="text-sm text-muted-foreground">Expired</div>
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-danger">146</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Expired</div>
         </div>
       </div>
 
       {/* Search and Actions */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="relative flex-1 max-w-sm w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Search numbers..."
@@ -158,22 +199,24 @@ export default function NumberPool() {
             className="pl-10"
           />
         </div>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" onClick={handleExport} className="gap-2 w-full sm:w-auto">
           <Download className="w-4 h-4" />
           Export
         </Button>
       </div>
 
       {/* Numbers Table */}
-      <DataTable
-        data={filteredNumbers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
-        columns={numberColumns}
-        pagination={{
-          currentPage,
-          totalPages,
-          onPageChange: setCurrentPage
-        }}
-      />
+      <div className="overflow-x-auto">
+        <DataTable
+          data={filteredNumbers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
+          columns={numberColumns}
+          pagination={{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage
+          }}
+        />
+      </div>
     </div>
   );
 }

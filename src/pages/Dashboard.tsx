@@ -75,17 +75,17 @@ const activityColumns = [
 
 export default function Dashboard() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to your WebHook Panel. Here's an overview of your system.
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
+          Welcome to your SMS Reseller Portal. Here's an overview of your system.
         </p>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <MetricsCard
           title="Total Users"
           value={mockMetrics.totalUsers.toLocaleString()}
@@ -124,39 +124,41 @@ export default function Dashboard() {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Recent Activity</h2>
         </div>
         
-        <DataTable
-          data={mockRecentActivity}
-          columns={activityColumns}
-        />
+        <div className="overflow-x-auto">
+          <DataTable
+            data={mockRecentActivity}
+            columns={activityColumns}
+          />
+        </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-card rounded-lg border border-border p-4 sm:p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-success" />
             <h3 className="font-semibold text-foreground">Growth Trends</h3>
           </div>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">User Registration</span>
+              <span className="text-muted-foreground text-sm">User Registration</span>
               <span className="text-success font-medium">+12.5%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">SMS Volume</span>
+              <span className="text-muted-foreground text-sm">SMS Volume</span>
               <span className="text-success font-medium">+8.2%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Revenue</span>
+              <span className="text-muted-foreground text-sm">Revenue</span>
               <span className="text-success font-medium">+15.3%</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
+        <div className="bg-card rounded-lg border border-border p-4 sm:p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <AlertCircle className="w-5 h-5 text-warning" />
             <h3 className="font-semibold text-foreground">System Alerts</h3>

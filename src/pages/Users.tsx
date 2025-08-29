@@ -191,15 +191,15 @@ export default function Users() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Users</h1>
-          <p className="text-muted-foreground">Manage user accounts and permissions</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Users</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Manage user accounts and permissions</p>
         </div>
-        <Link to="/users/create">
-          <Button className="gap-2">
+        <Link to="/users/create" className="w-full sm:w-auto">
+          <Button className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Add User
           </Button>
@@ -207,22 +207,22 @@ export default function Users() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-foreground">1,247</div>
-          <div className="text-sm text-muted-foreground">Total Users</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-foreground">1,247</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Total Users</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-success">1,198</div>
-          <div className="text-sm text-muted-foreground">Active Users</div>
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-success">1,198</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Active Users</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-warning">43</div>
-          <div className="text-sm text-muted-foreground">Suspended</div>
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-warning">43</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Suspended</div>
         </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="text-2xl font-bold text-primary">156</div>
-          <div className="text-sm text-muted-foreground">Resellers</div>
+        <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
+          <div className="text-xl sm:text-2xl font-bold text-primary">156</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Resellers</div>
         </div>
       </div>
 
@@ -240,15 +240,17 @@ export default function Users() {
       </div>
 
       {/* Users Table */}
-      <DataTable
-        data={filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
-        columns={userColumns}
-        pagination={{
-          currentPage,
-          totalPages,
-          onPageChange: setCurrentPage
-        }}
-      />
+      <div className="overflow-x-auto">
+        <DataTable
+          data={filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
+          columns={userColumns}
+          pagination={{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage
+          }}
+        />
+      </div>
     </div>
   );
 }
