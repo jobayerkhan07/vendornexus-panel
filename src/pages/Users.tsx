@@ -56,52 +56,10 @@ const mockUsers = [
   }
 ];
 
-const userColumns = [
-  { key: "name" as const, label: "Name" },
-  { key: "email" as const, label: "Email" },
-  { 
-    key: "role" as const, 
-    label: "Role",
-    render: (value: string) => (
-      <Badge variant={value === "Admin" ? "default" : value === "Reseller" ? "secondary" : "outline"}>
-        {value}
-      </Badge>
-    )
-  },
-  {
-    key: "status" as const,
-    label: "Status", 
-    render: (value: string) => (
-      <span className={`status-badge ${
-        value === "active" ? "status-active" : 
-        value === "suspended" ? "status-inactive" : "status-pending"
-      }`}>
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    )
-  },
-  {
-    key: "balance" as const,
-    label: "Balance",
-    render: (value: number) => (
-      <span className={`font-medium ${value < 0 ? "text-danger" : "text-foreground"}`}>
-        ${value.toFixed(2)}
-      </span>
-    )
-  },
-  { key: "smsCount" as const, label: "SMS Count" },
-  { key: "priceGroup" as const, label: "Price Group" },
-  { key: "lastActive" as const, label: "Last Active" },
-  {
-    key: "actions" as const,
-    label: "Actions",
-    render: (_, row: any) => (
-      <ActionButtons row={row} />
-    )
-  }
-];
-
-function ActionButtons({ row }: { row: any }) {
+export default function Users() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { startImpersonation } = useImpersonation();
   const { toast } = useToast();
 
@@ -141,48 +99,89 @@ function ActionButtons({ row }: { row: any }) {
     });
   };
 
-  return (
-    <div className="flex items-center gap-1">
-      <Button 
-        variant="ghost" 
-        size="sm"
-        onClick={() => handleEdit(row)}
-        className="h-8 w-8 p-0"
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
-      <Button 
-        variant="ghost" 
-        size="sm"
-        onClick={() => handleManageBalance(row)}
-        className="h-8 w-8 p-0"
-      >
-        <DollarSign className="w-4 h-4" />
-      </Button>
-      <Button 
-        variant="ghost" 
-        size="sm"
-        onClick={() => handleImpersonate(row)}
-        className="h-8 w-8 p-0 text-primary hover:text-primary"
-      >
-        <UserCheck className="w-4 h-4" />
-      </Button>
-      <Button 
-        variant="ghost" 
-        size="sm"
-        onClick={() => handleDelete(row)}
-        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
-    </div>
-  );
-}
+  const ActionButtons = ({ row }: { row: any }) => {
+    return (
+      <div className="flex items-center gap-1">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => handleEdit(row)}
+          className="h-8 w-8 p-0"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => handleManageBalance(row)}
+          className="h-8 w-8 p-0"
+        >
+          <DollarSign className="w-4 h-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => handleImpersonate(row)}
+          className="h-8 w-8 p-0 text-primary hover:text-primary"
+        >
+          <UserCheck className="w-4 h-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => handleDelete(row)}
+          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  };
 
-export default function Users() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const userColumns = [
+    { key: "name" as const, label: "Name" },
+    { key: "email" as const, label: "Email" },
+    { 
+      key: "role" as const, 
+      label: "Role",
+      render: (value: string) => (
+        <Badge variant={value === "Admin" ? "default" : value === "Reseller" ? "secondary" : "outline"}>
+          {value}
+        </Badge>
+      )
+    },
+    {
+      key: "status" as const,
+      label: "Status", 
+      render: (value: string) => (
+        <span className={`status-badge ${
+          value === "active" ? "status-active" : 
+          value === "suspended" ? "status-inactive" : "status-pending"
+        }`}>
+          {value.charAt(0).toUpperCase() + value.slice(1)}
+        </span>
+      )
+    },
+    {
+      key: "balance" as const,
+      label: "Balance",
+      render: (value: number) => (
+        <span className={`font-medium ${value < 0 ? "text-danger" : "text-foreground"}`}>
+          ${value.toFixed(2)}
+        </span>
+      )
+    },
+    { key: "smsCount" as const, label: "SMS Count" },
+    { key: "priceGroup" as const, label: "Price Group" },
+    { key: "lastActive" as const, label: "Last Active" },
+    {
+      key: "actions" as const,
+      label: "Actions",
+      render: (_, row: any) => (
+        <ActionButtons row={row} />
+      )
+    }
+  ];
 
   const filteredUsers = mockUsers.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
