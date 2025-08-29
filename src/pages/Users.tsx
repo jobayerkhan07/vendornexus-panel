@@ -3,8 +3,10 @@ import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, Trash2, DollarSign } from "lucide-react";
+import { Plus, Search, Edit, Trash2, DollarSign, UserCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data
 const mockUsers = [
@@ -94,20 +96,88 @@ const userColumns = [
     key: "actions" as const,
     label: "Actions",
     render: (_, row: any) => (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm">
-          <Edit className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="sm">
-          <DollarSign className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="sm" className="text-danger hover:text-danger">
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+      <ActionButtons row={row} />
     )
   }
 ];
+
+function ActionButtons({ row }: { row: any }) {
+  const { startImpersonation } = useImpersonation();
+  const { toast } = useToast();
+
+  const handleImpersonate = (targetUser: any) => {
+    const currentUser = {
+      id: "current-user-id",
+      email: "admin@example.com",
+      role: "admin"
+    };
+    
+    startImpersonation(currentUser, targetUser);
+    toast({
+      title: "Impersonation started",
+      description: `You are now impersonating ${targetUser.email}`,
+    });
+  };
+
+  const handleEdit = (user: any) => {
+    toast({
+      title: "Edit User",
+      description: `Edit functionality for ${user.email} would open here`,
+    });
+  };
+
+  const handleManageBalance = (user: any) => {
+    toast({
+      title: "Manage Balance",
+      description: `Balance management for ${user.email} would open here`,
+    });
+  };
+
+  const handleDelete = (user: any) => {
+    toast({
+      title: "Delete User",
+      description: `Delete confirmation for ${user.email} would appear here`,
+      variant: "destructive"
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => handleEdit(row)}
+        className="h-8 w-8 p-0"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => handleManageBalance(row)}
+        className="h-8 w-8 p-0"
+      >
+        <DollarSign className="w-4 h-4" />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => handleImpersonate(row)}
+        className="h-8 w-8 p-0 text-primary hover:text-primary"
+      >
+        <UserCheck className="w-4 h-4" />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        onClick={() => handleDelete(row)}
+        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");

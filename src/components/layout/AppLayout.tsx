@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,6 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <AppSidebar />
         
         <div className="flex-1 flex flex-col">
+          <ImpersonationBanner />
           {/* Header */}
           <header className="h-16 bg-card border-b border-border flex items-center px-4 lg:px-6 shadow-sm">
             <SidebarTrigger className="mr-4" />
