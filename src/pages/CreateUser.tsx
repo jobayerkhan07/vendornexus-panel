@@ -8,12 +8,69 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, UserPlus, Shield, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, UserPlus, Shield, Eye, EyeOff, Building2, DollarSign, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UserRole, SYSTEM_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, PermissionGroup, Permission } from "@/types/permissions";
 
 // Mock data
 const currentUserRole: UserRole = "super_admin"; // This would come from auth context
+
+// Mock vendor data
+const mockVendors = [
+  {
+    id: "1",
+    name: "Twilio",
+    type: "API",
+    status: "active",
+    requiresCredentials: true
+  },
+  {
+    id: "2",
+    name: "MessageBird",
+    type: "API",
+    status: "active",
+    requiresCredentials: true
+  },
+  {
+    id: "3",
+    name: "Plivo",
+    type: "Manual",
+    status: "active",
+    requiresCredentials: false
+  }
+];
+
+// Mock price groups data
+const mockPriceGroups = [
+  {
+    id: "1",
+    name: "Premium Group",
+    vendor: "Twilio",
+    basePrice: "$0.05",
+    smsPrice: "$0.02",
+    targetRole: "reseller",
+    createdBy: "admin"
+  },
+  {
+    id: "2",
+    name: "Standard Group",
+    vendor: "MessageBird",
+    basePrice: "$0.08",
+    smsPrice: "$0.03",
+    targetRole: "reseller",
+    createdBy: "admin"
+  },
+  {
+    id: "3",
+    name: "Client Basic",
+    vendor: "Plivo",
+    basePrice: "$0.12",
+    smsPrice: "$0.05",
+    targetRole: "client",
+    createdBy: "reseller"
+  }
+];
+
 const mockPermissionGroups: PermissionGroup[] = [
   {
     id: "1",
@@ -84,10 +141,17 @@ export default function CreateUser() {
   const [useCustomPermissions, setUseCustomPermissions] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // New state for vendor and price group selection
+  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
+  const [vendorCredentials, setVendorCredentials] = useState<Record<string, "admin" | "own">>({});
+  const [selectedPriceGroups, setSelectedPriceGroups] = useState<string[]>([]);
 
   const availableRoles = getAvailableRoles();
   const availablePermissions = selectedRole ? getAvailablePermissions(selectedRole) : [];
   const availableGroups = selectedRole ? mockPermissionGroups.filter(g => g.targetRole === selectedRole) : [];
+  const availablePriceGroups = selectedRole ? mockPriceGroups.filter(g => g.targetRole === selectedRole) : [];
+  const availableVendors = mockVendors.filter(v => v.status === "active");
   
   const permissionsToShow = SYSTEM_PERMISSIONS.filter(p => availablePermissions.includes(p.id));
   const categorizedPermissions = groupPermissionsByCategory(permissionsToShow);
@@ -97,6 +161,10 @@ export default function CreateUser() {
     setSelectedGroup("");
     setCustomPermissions([]);
     setUseCustomPermissions(false);
+    // Reset vendor and price group selections
+    setSelectedVendors([]);
+    setVendorCredentials({});
+    setSelectedPriceGroups([]);
   };
 
   const handleGroupChange = (groupId: string) => {
@@ -113,6 +181,39 @@ export default function CreateUser() {
     );
   };
 
+  const handleVendorToggle = (vendorId: string) => {
+    setSelectedVendors(prev => {
+      const newSelection = prev.includes(vendorId) 
+        ? prev.filter(id => id !== vendorId)
+        : [...prev, vendorId];
+      
+      // Clean up credentials for removed vendors
+      if (!newSelection.includes(vendorId)) {
+        setVendorCredentials(prevCreds => {
+          const { [vendorId]: removed, ...rest } = prevCreds;
+          return rest;
+        });
+      }
+      
+      return newSelection;
+    });
+  };
+
+  const handleCredentialSelection = (vendorId: string, credentialType: "admin" | "own") => {
+    setVendorCredentials(prev => ({
+      ...prev,
+      [vendorId]: credentialType
+    }));
+  };
+
+  const handlePriceGroupToggle = (priceGroupId: string) => {
+    setSelectedPriceGroups(prev => 
+      prev.includes(priceGroupId) 
+        ? prev.filter(id => id !== priceGroupId)
+        : [...prev, priceGroupId]
+    );
+  };
+
   const getSelectedPermissions = (): string[] => {
     if (useCustomPermissions) {
       return customPermissions;
@@ -125,7 +226,18 @@ export default function CreateUser() {
   };
 
   const selectedPermissions = getSelectedPermissions();
-  const isFormValid = email && password && confirmPassword && password === confirmPassword && selectedRole && selectedPermissions.length > 0;
+  
+  // Enhanced form validation
+  const isFormValid = email && 
+    password && 
+    confirmPassword && 
+    password === confirmPassword && 
+    selectedRole && 
+    selectedPermissions.length > 0 &&
+    // For resellers, require vendor and price group selection
+    (selectedRole !== "reseller" || (selectedVendors.length > 0 && selectedPriceGroups.length > 0)) &&
+    // For clients created by admin, require price group selection
+    (selectedRole !== "client" || currentUserRole !== "admin" || selectedPriceGroups.length > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +252,10 @@ export default function CreateUser() {
         password,
         role: selectedRole,
         permissions: selectedPermissions,
-        permissionGroupId: selectedGroup || undefined
+        permissionGroupId: selectedGroup || undefined,
+        vendors: selectedVendors,
+        vendorCredentials,
+        priceGroups: selectedPriceGroups
       };
       
       console.log("Creating user:", userData);
@@ -156,6 +271,9 @@ export default function CreateUser() {
       setSelectedGroup("");
       setCustomPermissions([]);
       setUseCustomPermissions(false);
+      setSelectedVendors([]);
+      setVendorCredentials({});
+      setSelectedPriceGroups([]);
       
       alert("User created successfully!");
       
@@ -272,6 +390,146 @@ export default function CreateUser() {
             </CardContent>
           </Card>
 
+          {/* Vendor and Price Group Configuration */}
+          {selectedRole && (selectedRole === "reseller" || (selectedRole === "client" && currentUserRole === "admin")) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  Vendor & Pricing Configuration
+                </CardTitle>
+                <CardDescription>
+                  {selectedRole === "reseller" 
+                    ? "Select vendors and price groups for this reseller" 
+                    : "Select price groups for direct client access"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Vendor Selection for Resellers */}
+                {selectedRole === "reseller" && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-base font-medium">Available Vendors</Label>
+                      <p className="text-sm text-muted-foreground">Select vendors this reseller can access</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {availableVendors.map((vendor) => (
+                        <Card key={vendor.id} className={`cursor-pointer transition-colors ${
+                          selectedVendors.includes(vendor.id) ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
+                        }`}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center space-x-3">
+                              <Checkbox
+                                id={`vendor-${vendor.id}`}
+                                checked={selectedVendors.includes(vendor.id)}
+                                onCheckedChange={() => handleVendorToggle(vendor.id)}
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <label htmlFor={`vendor-${vendor.id}`} className="font-medium cursor-pointer">
+                                    {vendor.name}
+                                  </label>
+                                  <Badge variant={vendor.type === "API" ? "default" : "secondary"}>
+                                    {vendor.type}
+                                  </Badge>
+                                </div>
+                                
+                                {/* Credential Selection for API Vendors */}
+                                {selectedVendors.includes(vendor.id) && vendor.requiresCredentials && (
+                                  <div className="mt-3 space-y-2">
+                                    <Label className="text-sm">API Credentials</Label>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        type="button"
+                                        variant={vendorCredentials[vendor.id] === "admin" ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => handleCredentialSelection(vendor.id, "admin")}
+                                        className="flex-1"
+                                      >
+                                        Use Admin's
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant={vendorCredentials[vendor.id] === "own" ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => handleCredentialSelection(vendor.id, "own")}
+                                        className="flex-1"
+                                      >
+                                        Use Own
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Price Group Selection */}
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-medium">Price Groups</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedRole === "reseller" 
+                        ? "Select price groups this reseller can offer to clients"
+                        : "Select price groups for this client"
+                      }
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {availablePriceGroups.map((priceGroup) => (
+                      <Card key={priceGroup.id} className={`cursor-pointer transition-colors ${
+                        selectedPriceGroups.includes(priceGroup.id) ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox
+                              id={`price-${priceGroup.id}`}
+                              checked={selectedPriceGroups.includes(priceGroup.id)}
+                              onCheckedChange={() => handlePriceGroupToggle(priceGroup.id)}
+                            />
+                            <div className="flex-1">
+                              <label htmlFor={`price-${priceGroup.id}`} className="font-medium cursor-pointer">
+                                {priceGroup.name}
+                              </label>
+                              <div className="text-sm text-muted-foreground mt-1">
+                                <div>Vendor: {priceGroup.vendor}</div>
+                                <div className="flex gap-4 mt-1">
+                                  <span>Base: {priceGroup.basePrice}</span>
+                                  <span>SMS: {priceGroup.smsPrice}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Selection Summary */}
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">Selection Summary</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRole === "reseller" && (
+                      <Badge variant="secondary">
+                        {selectedVendors.length} vendor{selectedVendors.length !== 1 ? 's' : ''} selected
+                      </Badge>
+                    )}
+                    <Badge variant="secondary">
+                      {selectedPriceGroups.length} price group{selectedPriceGroups.length !== 1 ? 's' : ''} selected
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Permissions Configuration */}
           {selectedRole && (
             <Card>
@@ -381,7 +639,7 @@ export default function CreateUser() {
                 {/* Permission Summary */}
                 <div className="space-y-2">
                   <Label className="text-base font-medium">Permission Summary</Label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">{selectedPermissions.length} permissions selected</Badge>
                     {selectedGroup && (
                       <Badge variant="outline">
