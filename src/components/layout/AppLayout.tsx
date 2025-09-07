@@ -54,35 +54,32 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full bg-background flex overflow-hidden">
-        {/* Fixed Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 h-14 sm:h-16 bg-card border-b border-border flex items-center px-3 sm:px-4 lg:px-6 shadow-sm">
-          <SidebarTrigger className="mr-2 sm:mr-4" />
-          <div className="flex-1 flex items-center justify-between min-w-0">
-            <h1 className="text-lg sm:text-xl font-semibold text-foreground hidden xs:block truncate">SMS Reseller Portal</h1>
-            <h1 className="text-base font-semibold text-foreground xs:hidden">SRP</h1>
-            <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
-              {user && (
-                <div className="hidden lg:block text-sm text-muted-foreground truncate">
-                  Welcome back, <span className="font-medium text-foreground">{user.display_name || "User"}</span>
-                </div>
-              )}
-              <ThemeToggle />
-              <UserMenu user={user} />
-            </div>
-          </div>
-        </header>
-
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
-        <div className="flex-1 flex flex-col min-w-0 pt-14 sm:pt-16">
+        <div className="flex-1 flex flex-col">
           <ImpersonationBanner />
+          {/* Header */}
+          <header className="h-14 sm:h-16 bg-card border-b border-border flex items-center px-3 sm:px-4 lg:px-6 shadow-sm">
+            <SidebarTrigger className="mr-2 sm:mr-4" />
+            <div className="flex-1 flex items-center justify-between">
+              <h1 className="text-lg sm:text-xl font-semibold text-foreground hidden xs:block">SMS Reseller Portal</h1>
+              <h1 className="text-base font-semibold text-foreground xs:hidden">SRP</h1>
+              <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
+                {user && (
+                  <div className="hidden lg:block text-sm text-muted-foreground">
+                    Welcome back, <span className="font-medium text-foreground">{user.display_name || "User"}</span>
+                  </div>
+                )}
+                <ThemeToggle />
+                <UserMenu user={user} />
+              </div>
+            </div>
+          </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-4 lg:p-8 xl:p-10 bg-background overflow-y-auto overflow-x-hidden min-w-0">
-            <div className="w-full max-w-[2000px] mx-auto">
-              {children}
-            </div>
+          <main className="flex-1 p-4 lg:p-8 xl:p-10 bg-background overflow-auto max-w-[2000px] mx-auto">
+            {children}
           </main>
         </div>
       </div>
