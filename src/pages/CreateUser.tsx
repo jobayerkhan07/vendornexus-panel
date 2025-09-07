@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, UserPlus, Shield, Eye, EyeOff, Building2, DollarSign, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UserRole, SYSTEM_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, PermissionGroup, Permission } from "@/types/permissions";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data
 const currentUserRole: UserRole = "super_admin"; // This would come from auth context
@@ -46,28 +47,31 @@ const mockPriceGroups = [
     id: "1",
     name: "Premium Group",
     vendor: "Twilio",
-    basePrice: "$0.05",
-    smsPrice: "$0.02",
+    basePrice: "0.05",
+    smsPrice: "0.02",
     targetRole: "reseller",
-    createdBy: "admin"
+    createdBy: "admin",
+    countries: ["US", "CA", "UK"]
   },
   {
     id: "2",
     name: "Standard Group",
     vendor: "MessageBird",
-    basePrice: "$0.08",
-    smsPrice: "$0.03",
+    basePrice: "0.08",
+    smsPrice: "0.03",
     targetRole: "reseller",
-    createdBy: "admin"
+    createdBy: "admin",
+    countries: ["US", "EU"]
   },
   {
     id: "3",
     name: "Client Basic",
     vendor: "Plivo",
-    basePrice: "$0.12",
-    smsPrice: "$0.05",
+    basePrice: "0.12",
+    smsPrice: "0.05",
     targetRole: "client",
-    createdBy: "reseller"
+    createdBy: "reseller",
+    countries: ["Global"]
   }
 ];
 
@@ -94,200 +98,65 @@ const mockPermissionGroups: PermissionGroup[] = [
   }
 ];
 
-const getAvailableRoles = (): UserRole[] => {
-  if (currentUserRole === "super_admin") return ["admin", "reseller", "client"];
-  if (currentUserRole === "admin") return ["reseller", "client"];
-  if (currentUserRole === "reseller") return ["client"];
-  return [];
-};
-
-const getAvailablePermissions = (targetRole: UserRole): string[] => {
-  // Get permissions that the current user can grant to the target role
-  const currentUserPermissions = DEFAULT_ROLE_PERMISSIONS[currentUserRole] || [];
-  const targetRoleMaxPermissions = DEFAULT_ROLE_PERMISSIONS[targetRole] || [];
-  
-  // User can only grant permissions they have and that are valid for the target role
-  return currentUserPermissions.filter(permission => 
-    targetRoleMaxPermissions.includes(permission)
-  );
-};
-
-const getRoleColor = (role: UserRole) => {
-  switch (role) {
-    case "admin": return "bg-gradient-to-r from-blue-500 to-cyan-500";
-    case "reseller": return "bg-gradient-to-r from-green-500 to-emerald-500";
-    case "client": return "bg-gradient-to-r from-orange-500 to-yellow-500";
-    default: return "bg-muted";
-  }
-};
-
-const groupPermissionsByCategory = (permissions: Permission[]) => {
-  return permissions.reduce((acc, permission) => {
-    if (!acc[permission.category]) {
-      acc[permission.category] = [];
-    }
-    acc[permission.category].push(permission);
-    return acc;
-  }, {} as Record<string, Permission[]>);
-};
+interface CreateUserFormData {
+  email: string;
+  name: string;
+  role: UserRole | "";
+  status: "active" | "inactive" | "suspended";
+  balance: string;
+  balanceType: "credit" | "prepaid";
+  selectedVendors: string[];
+  vendorCredentials: Record<string, "admin" | "own">;
+  selectedPriceGroups: string[];
+}
 
 export default function CreateUser() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState<UserRole | "">("");
-  const [selectedGroup, setSelectedGroup] = useState<string>("");
-  const [customPermissions, setCustomPermissions] = useState<string[]>([]);
-  const [useCustomPermissions, setUseCustomPermissions] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // New state for vendor and price group selection
-  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
-  const [vendorCredentials, setVendorCredentials] = useState<Record<string, "admin" | "own">>({});
-  const [selectedPriceGroups, setSelectedPriceGroups] = useState<string[]>([]);
+  const { toast } = useToast();
+  const [formData, setFormData] = useState<CreateUserFormData>({
+    email: "",
+    name: "",
+    role: "",
+    status: "active",
+    balance: "",
+    balanceType: "credit",
+    selectedVendors: [],
+    vendorCredentials: {},
+    selectedPriceGroups: []
+  });
 
-  const availableRoles = getAvailableRoles();
-  const availablePermissions = selectedRole ? getAvailablePermissions(selectedRole) : [];
-  const availableGroups = selectedRole ? mockPermissionGroups.filter(g => g.targetRole === selectedRole) : [];
-  const availablePriceGroups = selectedRole ? mockPriceGroups.filter(g => g.targetRole === selectedRole) : [];
-  const availableVendors = mockVendors.filter(v => v.status === "active");
-  
-  const permissionsToShow = SYSTEM_PERMISSIONS.filter(p => availablePermissions.includes(p.id));
-  const categorizedPermissions = groupPermissionsByCategory(permissionsToShow);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!formData.email || !formData.name || !formData.role) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  const handleRoleChange = (role: UserRole) => {
-    setSelectedRole(role);
-    setSelectedGroup("");
-    setCustomPermissions([]);
-    setUseCustomPermissions(false);
-    // Reset vendor and price group selections
-    setSelectedVendors([]);
-    setVendorCredentials({});
-    setSelectedPriceGroups([]);
-  };
+    // Role-specific validation
+    if (formData.role === "reseller" && (formData.selectedVendors.length === 0 || formData.selectedPriceGroups.length === 0)) {
+      toast({
+        title: "Error", 
+        description: "Resellers must have at least one vendor and one price group selected",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  const handleGroupChange = (groupId: string) => {
-    setSelectedGroup(groupId);
-    setUseCustomPermissions(false);
-    setCustomPermissions([]);
-  };
-
-  const handlePermissionToggle = (permissionId: string) => {
-    setCustomPermissions(prev => 
-      prev.includes(permissionId) 
-        ? prev.filter(id => id !== permissionId)
-        : [...prev, permissionId]
-    );
-  };
-
-  const handleVendorToggle = (vendorId: string) => {
-    setSelectedVendors(prev => {
-      const newSelection = prev.includes(vendorId) 
-        ? prev.filter(id => id !== vendorId)
-        : [...prev, vendorId];
-      
-      // Clean up credentials for removed vendors
-      if (!newSelection.includes(vendorId)) {
-        setVendorCredentials(prevCreds => {
-          const { [vendorId]: removed, ...rest } = prevCreds;
-          return rest;
-        });
-      }
-      
-      return newSelection;
+    console.log("Creating user:", formData);
+    toast({
+      title: "Success",
+      description: "User created successfully!"
     });
   };
 
-  const handleCredentialSelection = (vendorId: string, credentialType: "admin" | "own") => {
-    setVendorCredentials(prev => ({
-      ...prev,
-      [vendorId]: credentialType
-    }));
-  };
-
-  const handlePriceGroupToggle = (priceGroupId: string) => {
-    setSelectedPriceGroups(prev => 
-      prev.includes(priceGroupId) 
-        ? prev.filter(id => id !== priceGroupId)
-        : [...prev, priceGroupId]
-    );
-  };
-
-  const getSelectedPermissions = (): string[] => {
-    if (useCustomPermissions) {
-      return customPermissions;
-    }
-    if (selectedGroup) {
-      const group = mockPermissionGroups.find(g => g.id === selectedGroup);
-      return group?.permissions || [];
-    }
-    return selectedRole ? DEFAULT_ROLE_PERMISSIONS[selectedRole] || [] : [];
-  };
-
-  const selectedPermissions = getSelectedPermissions();
-  
-  // Enhanced form validation
-  const isFormValid = email && 
-    password && 
-    confirmPassword && 
-    password === confirmPassword && 
-    selectedRole && 
-    selectedPermissions.length > 0 &&
-    // For resellers, require vendor and price group selection
-    (selectedRole !== "reseller" || (selectedVendors.length > 0 && selectedPriceGroups.length > 0)) &&
-    // For clients created by admin, require price group selection
-    (selectedRole !== "client" || currentUserRole !== "admin" || selectedPriceGroups.length > 0);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isFormValid) return;
-
-    setIsSubmitting(true);
-    
-    try {
-      // Here you would typically call an API to create the user
-      const userData = {
-        email,
-        password,
-        role: selectedRole,
-        permissions: selectedPermissions,
-        permissionGroupId: selectedGroup || undefined,
-        vendors: selectedVendors,
-        vendorCredentials,
-        priceGroups: selectedPriceGroups
-      };
-      
-      console.log("Creating user:", userData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Reset form on success
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-      setSelectedRole("");
-      setSelectedGroup("");
-      setCustomPermissions([]);
-      setUseCustomPermissions(false);
-      setSelectedVendors([]);
-      setVendorCredentials({});
-      setSelectedPriceGroups([]);
-      
-      alert("User created successfully!");
-      
-    } catch (error) {
-      console.error("Error creating user:", error);
-      alert("Failed to create user. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <Link to="/users">
           <Button variant="outline" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -295,372 +164,230 @@ export default function CreateUser() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Create New User</h1>
-          <p className="text-muted-foreground">Add a new user with role-specific permissions</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Create New User</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Add a new user with role-specific permissions</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-4xl">
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                Basic Information
-              </CardTitle>
-              <CardDescription>
-                Enter the user's email and create a secure password
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="user@example.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">User Role</Label>
-                  <Select value={selectedRole} onValueChange={handleRoleChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select user role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableRoles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${getRoleColor(role)}`} />
-                            {role.replace('_', ' ').toUpperCase()}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Create a secure password"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm the password"
-                    required
-                  />
-                </div>
-              </div>
-
-              {password !== confirmPassword && confirmPassword && (
-                <Alert>
-                  <AlertDescription>Passwords do not match</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Vendor and Price Group Configuration */}
-          {selectedRole && (selectedRole === "reseller" || (selectedRole === "client" && currentUserRole === "admin")) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5" />
-                  Vendor & Pricing Configuration
-                </CardTitle>
-                <CardDescription>
-                  {selectedRole === "reseller" 
-                    ? "Select vendors and price groups for this reseller" 
-                    : "Select price groups for direct client access"
-                  }
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Vendor Selection for Resellers */}
-                {selectedRole === "reseller" && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">Available Vendors</Label>
-                      <p className="text-sm text-muted-foreground">Select vendors this reseller can access</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {availableVendors.map((vendor) => (
-                        <Card key={vendor.id} className={`cursor-pointer transition-colors ${
-                          selectedVendors.includes(vendor.id) ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
-                        }`}>
-                          <CardContent className="p-4">
-                            <div className="flex items-center space-x-3">
-                              <Checkbox
-                                id={`vendor-${vendor.id}`}
-                                checked={selectedVendors.includes(vendor.id)}
-                                onCheckedChange={() => handleVendorToggle(vendor.id)}
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <label htmlFor={`vendor-${vendor.id}`} className="font-medium cursor-pointer">
-                                    {vendor.name}
-                                  </label>
-                                  <Badge variant={vendor.type === "API" ? "default" : "secondary"}>
-                                    {vendor.type}
-                                  </Badge>
-                                </div>
-                                
-                                {/* Credential Selection for API Vendors */}
-                                {selectedVendors.includes(vendor.id) && vendor.requiresCredentials && (
-                                  <div className="mt-3 space-y-2">
-                                    <Label className="text-sm">API Credentials</Label>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        type="button"
-                                        variant={vendorCredentials[vendor.id] === "admin" ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => handleCredentialSelection(vendor.id, "admin")}
-                                        className="flex-1"
-                                      >
-                                        Use Admin's
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant={vendorCredentials[vendor.id] === "own" ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => handleCredentialSelection(vendor.id, "own")}
-                                        className="flex-1"
-                                      >
-                                        Use Own
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Price Group Selection */}
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-base font-medium">Price Groups</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedRole === "reseller" 
-                        ? "Select price groups this reseller can offer to clients"
-                        : "Select price groups for this client"
-                      }
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {availablePriceGroups.map((priceGroup) => (
-                      <Card key={priceGroup.id} className={`cursor-pointer transition-colors ${
-                        selectedPriceGroups.includes(priceGroup.id) ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'
-                      }`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center space-x-3">
-                            <Checkbox
-                              id={`price-${priceGroup.id}`}
-                              checked={selectedPriceGroups.includes(priceGroup.id)}
-                              onCheckedChange={() => handlePriceGroupToggle(priceGroup.id)}
-                            />
-                            <div className="flex-1">
-                              <label htmlFor={`price-${priceGroup.id}`} className="font-medium cursor-pointer">
-                                {priceGroup.name}
-                              </label>
-                              <div className="text-sm text-muted-foreground mt-1">
-                                <div>Vendor: {priceGroup.vendor}</div>
-                                <div className="flex gap-4 mt-1">
-                                  <span>Base: {priceGroup.basePrice}</span>
-                                  <span>SMS: {priceGroup.smsPrice}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Selection Summary */}
-                <div className="space-y-2">
-                  <Label className="text-base font-medium">Selection Summary</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRole === "reseller" && (
-                      <Badge variant="secondary">
-                        {selectedVendors.length} vendor{selectedVendors.length !== 1 ? 's' : ''} selected
-                      </Badge>
-                    )}
-                    <Badge variant="secondary">
-                      {selectedPriceGroups.length} price group{selectedPriceGroups.length !== 1 ? 's' : ''} selected
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Permissions Configuration */}
-          {selectedRole && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Permissions Configuration
-                </CardTitle>
-                <CardDescription>
-                  Configure what the user can access and manage
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Permission Groups */}
-                {availableGroups.length > 0 && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">Use Permission Group</Label>
-                      <p className="text-sm text-muted-foreground">Select a pre-configured permission template</p>
-                    </div>
-                    <Select value={selectedGroup} onValueChange={handleGroupChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a permission group (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableGroups.map((group) => (
-                          <SelectItem key={group.id} value={group.id}>
-                            <div className="space-y-1">
-                              <div className="font-medium">{group.name}</div>
-                              <div className="text-xs text-muted-foreground">{group.description}</div>
-                              <Badge variant="secondary" className="text-xs">
-                                {group.permissions.length} permissions
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <Separator />
-
-                {/* Custom Permissions */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-base font-medium">Custom Permissions</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {useCustomPermissions ? "Select individual permissions" : "Or customize permissions manually"}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="useCustom"
-                        checked={useCustomPermissions}
-                        onCheckedChange={(checked) => {
-                          setUseCustomPermissions(!!checked);
-                          if (checked) {
-                            setSelectedGroup("");
-                          } else {
-                            setCustomPermissions([]);
-                          }
-                        }}
-                      />
-                      <Label htmlFor="useCustom">Use custom permissions</Label>
-                    </div>
-                  </div>
-
-                  {useCustomPermissions && (
-                    <div className="space-y-4">
-                      {Object.entries(categorizedPermissions).map(([category, permissions]) => (
-                        <Card key={category}>
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">{category}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {permissions.map((permission) => (
-                                <div key={permission.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={permission.id}
-                                    checked={customPermissions.includes(permission.id)}
-                                    onCheckedChange={() => handlePermissionToggle(permission.id)}
-                                  />
-                                  <div className="grid gap-1.5 leading-none">
-                                    <label
-                                      htmlFor={permission.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                    >
-                                      {permission.name}
-                                    </label>
-                                    <p className="text-xs text-muted-foreground">
-                                      {permission.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Permission Summary */}
-                <div className="space-y-2">
-                  <Label className="text-base font-medium">Permission Summary</Label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{selectedPermissions.length} permissions selected</Badge>
-                    {selectedGroup && (
-                      <Badge variant="outline">
-                        Using group: {mockPermissionGroups.find(g => g.id === selectedGroup)?.name}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-4">
-            <Link to="/users">
-              <Button variant="outline">Cancel</Button>
-            </Link>
-            <Button type="submit" disabled={!isFormValid || isSubmitting}>
-              {isSubmitting ? "Creating User..." : "Create User"}
-            </Button>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="user@example.com"
+              required
+            />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="John Doe"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="role">User Role *</Label>
+            <Select 
+              value={formData.role} 
+              onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="reseller">Reseller</SelectItem>
+                <SelectItem value="client">Client</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status *</Label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(value: "active" | "inactive" | "suspended") => 
+                setFormData({ ...formData, status: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Balance Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="balance">Initial Balance</Label>
+            <Input
+              id="balance"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.balance}
+              onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
+              placeholder="0.00"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="balanceType">Balance Type</Label>
+            <Select 
+              value={formData.balanceType} 
+              onValueChange={(value: "credit" | "prepaid") => 
+                setFormData({ ...formData, balanceType: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select balance type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="credit">Credit</SelectItem>
+                <SelectItem value="prepaid">Prepaid</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Vendor Selection */}
+        {(formData.role === "reseller" || formData.role === "client") && (
+          <div className="space-y-4 p-4 sm:p-6 bg-muted/30 rounded-lg border border-border">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground">Vendor Access & Pricing</h3>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Available Vendors</Label>
+                <div className="grid grid-cols-1 gap-3">
+                  {mockVendors.map((vendor) => (
+                    <div key={vendor.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 sm:p-4 bg-card rounded-lg border border-border">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <Checkbox
+                          id={`vendor-${vendor.id}`}
+                          checked={formData.selectedVendors.includes(vendor.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                selectedVendors: [...formData.selectedVendors, vendor.id]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                selectedVendors: formData.selectedVendors.filter(id => id !== vendor.id)
+                              });
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <label htmlFor={`vendor-${vendor.id}`} className="text-sm font-medium text-foreground cursor-pointer block truncate">
+                            {vendor.name}
+                          </label>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+                            <span className="text-xs text-muted-foreground">Type: {vendor.type}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full w-fit ${
+                              vendor.status === "active" ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
+                            }`}>
+                              {vendor.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* API Credential Selection for API vendors */}
+                      {vendor.type === "API" && formData.selectedVendors.includes(vendor.id) && (
+                        <div className="w-full sm:w-48">
+                          <Select
+                            value={formData.vendorCredentials[vendor.id] || ""}
+                            onValueChange={(value: "admin" | "own") => setFormData({
+                              ...formData,
+                              vendorCredentials: {
+                                ...formData.vendorCredentials,
+                                [vendor.id]: value
+                              }
+                            })}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Select credentials" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Use Admin Credentials</SelectItem>
+                              <SelectItem value="own">Use Own Credentials</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Available Price Groups</Label>
+                <div className="grid grid-cols-1 gap-3">
+                  {mockPriceGroups.map((group) => (
+                    <div key={group.id} className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 p-3 sm:p-4 bg-card rounded-lg border border-border">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <Checkbox
+                          id={`price-${group.id}`}
+                          checked={formData.selectedPriceGroups.includes(group.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                selectedPriceGroups: [...formData.selectedPriceGroups, group.id]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                selectedPriceGroups: formData.selectedPriceGroups.filter(id => id !== group.id)
+                              });
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <label htmlFor={`price-${group.id}`} className="text-sm font-medium text-foreground cursor-pointer block truncate">
+                            {group.name}
+                          </label>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+                            <span className="text-xs text-muted-foreground">Countries: {group.countries.join(", ")}</span>
+                            <span className="text-xs text-muted-foreground">Base Price: ${group.basePrice}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 border-t border-border">
+          <Button type="submit" className="flex-1">
+            Create User
+          </Button>
+          <Button type="button" variant="outline" className="flex-1" onClick={() => window.history.back()}>
+            Cancel
+          </Button>
         </div>
       </form>
     </div>

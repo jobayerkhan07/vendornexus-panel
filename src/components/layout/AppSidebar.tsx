@@ -123,18 +123,18 @@ export function AppSidebar() {
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent className="bg-card border-r border-border">
         {/* Logo */}
-        <div className="p-4 border-b border-border">
+        <div className="p-3 sm:p-4 border-b border-border">
           {!collapsed ? (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary-foreground" />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold text-lg">WebHook Panel</span>
+              <span className="font-semibold text-base sm:text-lg truncate">WebHook Panel</span>
             </div>
           ) : (
             <div className="flex justify-center">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary-foreground" />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
               </div>
             </div>
           )}
@@ -145,13 +145,13 @@ export function AppSidebar() {
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1 p-2">
+            <SidebarMenu className="space-y-1 p-1 sm:p-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavClasses(item.url)}>
                       <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span className="text-sm sm:text-base truncate">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
