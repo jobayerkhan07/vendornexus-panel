@@ -99,12 +99,13 @@ const getMenuItems = (role: string) => {
 };
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
   
   const menuItems = getMenuItems(currentUserRole);
   const collapsed = state === "collapsed";
+  const isOpen = state === "expanded";
   
   const isActive = (path: string) => {
     if (path === "/" && currentPath === "/") return true;
@@ -120,10 +121,22 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarContent className="bg-card border-r border-border">
+    <>
+      {/* Overlay for expanded sidebar on small screens */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden" 
+          onClick={() => setOpenMobile(false)}
+        />
+      )}
+      
+      <Sidebar 
+        className={collapsed ? "w-20" : "w-64 fixed inset-y-0 left-0 z-40 lg:relative lg:z-auto"} 
+        collapsible="icon"
+      >
+      <SidebarContent className="bg-card border-r border-border pt-14 sm:pt-16">
         {/* Logo */}
-        <div className="p-3 sm:p-4 border-b border-border">
+        <div className="p-3 sm:p-4">
           {!collapsed ? (
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -133,8 +146,8 @@ export function AppSidebar() {
             </div>
           ) : (
             <div className="flex justify-center">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Zap className="w-4 h-4 text-primary-foreground" />
               </div>
             </div>
           )}
@@ -170,6 +183,7 @@ export function AppSidebar() {
           </div>
         )}
       </SidebarContent>
-    </Sidebar>
+      </Sidebar>
+    </>
   );
 }
