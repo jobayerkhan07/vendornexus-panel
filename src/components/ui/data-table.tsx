@@ -58,43 +58,45 @@ export function DataTable<T>({ data, columns, pagination }: DataTableProps<T>) {
       </div>
 
       {/* Desktop Table Layout */}
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map((column) => (
-                <TableHead key={String(column.key)} className="bg-muted/50 whitespace-nowrap">
-                  {column.label}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.length === 0 ? (
+      <div className="hidden md:block">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell 
-                  colSpan={columns.length} 
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  No data available
-                </TableCell>
+                {columns.map((column) => (
+                  <TableHead key={String(column.key)} className="bg-muted/50 whitespace-nowrap">
+                    {column.label}
+                  </TableHead>
+                ))}
               </TableRow>
-            ) : (
-              data.map((row, index) => (
-                <TableRow key={index} className="hover:bg-muted/30">
-                  {columns.map((column) => (
-                    <TableCell key={String(column.key)} className="whitespace-nowrap">
-                      {column.render 
-                        ? column.render(row[column.key], row)
-                        : String(row[column.key] || "-")
-                      }
-                    </TableCell>
-                  ))}
+            </TableHeader>
+            <TableBody>
+              {data.length === 0 ? (
+                <TableRow>
+                  <TableCell 
+                    colSpan={columns.length} 
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    No data available
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                data.map((row, index) => (
+                  <TableRow key={index} className="hover:bg-muted/30">
+                    {columns.map((column) => (
+                      <TableCell key={String(column.key)} className="whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis">
+                        {column.render 
+                          ? column.render(row[column.key], row)
+                          : String(row[column.key] || "-")
+                        }
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {pagination && pagination.totalPages > 1 && (
