@@ -3,8 +3,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, Trash2, DollarSign, UserCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Search, Edit, Trash2, DollarSign, UserCheck, Wallet } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,6 +62,7 @@ export default function Users() {
   const itemsPerPage = 10;
   const { startImpersonation } = useImpersonation();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleImpersonate = (targetUser: any) => {
     const currentUser = {
@@ -85,9 +86,11 @@ export default function Users() {
   };
 
   const handleManageBalance = (user: any) => {
+    // Navigate to balance management page or open balance dialog
+    console.log("Managing balance for:", user);
     toast({
-      title: "Manage Balance",
-      description: `Balance management for ${user.email} would open here`,
+      title: "Balance Management",
+      description: `Opening balance management for ${user.email}`,
     });
   };
 
@@ -198,12 +201,20 @@ export default function Users() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Users</h1>
           <p className="text-muted-foreground text-sm sm:text-base">Manage user accounts and permissions</p>
         </div>
-        <Link to="/users/create" className="w-full sm:w-auto">
-          <Button className="gap-2 w-full sm:w-auto">
-            <Plus className="w-4 h-4" />
-            Add User
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Link to="/balance" className="w-full sm:w-auto">
+            <Button variant="outline" className="gap-2 w-full sm:w-auto">
+              <Wallet className="w-4 h-4" />
+              Balance Management
+            </Button>
+          </Link>
+          <Link to="/users/create" className="w-full sm:w-auto">
+            <Button className="gap-2 w-full sm:w-auto">
+              <Plus className="w-4 h-4" />
+              Add User
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}

@@ -16,6 +16,7 @@ import UserRoles from "./pages/UserRoles";
 import SellPriceGroups from "./pages/SellPriceGroups";
 import PermissionGroups from "./pages/PermissionGroups";
 import CreateUser from "./pages/CreateUser";
+import BalanceManagement from "./pages/BalanceManagement";
 import UserPermissions from "./pages/UserPermissions";
 import SystemPermissions from "./pages/SystemPermissions";
 import VendorAPIs from "./pages/VendorAPIs";
@@ -82,6 +83,11 @@ const App = () => (
             <Route path="/users/create" element={
               <AppLayout>
                 <CreateUser />
+              </AppLayout>
+            } />
+            <Route path="/balance" element={
+              <AppLayout>
+                <BalanceManagement />
               </AppLayout>
             } />
             <Route path="/sell-price-groups" element={

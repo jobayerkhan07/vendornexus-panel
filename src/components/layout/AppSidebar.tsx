@@ -4,7 +4,7 @@ import {
   Users, UserCog, DollarSign, Building2, Phone, 
   Settings, Mail, MessageSquare, BarChart3, 
   Shield, CreditCard, Zap, Database, Globe, User,
-  Key, UserX
+  Key, UserX, Wallet
 } from "lucide-react";
 
 import {
@@ -34,6 +34,7 @@ const getMenuItems = (role: string) => {
       { title: "System Permissions", url: "/system-permissions", icon: Database },
       { title: "Users", url: "/users", icon: Users },
       { title: "Create User", url: "/users/create", icon: UserCog },
+      { title: "Balance Management", url: "/balance", icon: Wallet },
       { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
       { title: "Vendors", url: "/vendors", icon: Building2 },
       { title: "Number Pool", url: "/number-pool", icon: Phone },
@@ -55,6 +56,7 @@ const getMenuItems = (role: string) => {
       { title: "System Permissions", url: "/system-permissions", icon: Database },
       { title: "Users", url: "/users", icon: Users },
       { title: "Create User", url: "/users/create", icon: UserCog },
+      { title: "Balance Management", url: "/balance", icon: Wallet },
       { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
       { title: "Vendors", url: "/vendors", icon: Building2 },
       { title: "Number Pool", url: "/number-pool", icon: Phone },
@@ -73,6 +75,7 @@ const getMenuItems = (role: string) => {
       { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
       { title: "Permission Groups", url: "/permission-groups", icon: UserX },
       { title: "Users", url: "/users", icon: Users },
+      { title: "Balance Management", url: "/balance", icon: Wallet },
       { title: "Vendors", url: "/vendors", icon: Building2 },
       { title: "Number Pool", url: "/number-pool", icon: Phone },
       { title: "Vendor APIs", url: "/vendor-apis", icon: Globe },

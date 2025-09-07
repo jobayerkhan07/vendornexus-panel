@@ -242,11 +242,13 @@ export default function CreateUser() {
               id="balance"
               type="number"
               step="0.01"
-              min="0"
               value={formData.balance}
               onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
               placeholder="0.00"
             />
+            <div className="text-sm text-muted-foreground">
+              Can be negative to give user credit. Your available balance will be locked accordingly.
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -261,8 +263,8 @@ export default function CreateUser() {
                 <SelectValue placeholder="Select balance type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="credit">Credit</SelectItem>
-                <SelectItem value="prepaid">Prepaid</SelectItem>
+                <SelectItem value="credit">Credit (Negative Balance)</SelectItem>
+                <SelectItem value="prepaid">Prepaid (Positive Balance)</SelectItem>
               </SelectContent>
             </Select>
           </div>
