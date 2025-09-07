@@ -81,44 +81,44 @@ export default function PaymentGateway() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium truncate mr-2">Total Payments</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156</div>
+            <div className="text-xl sm:text-2xl font-bold">156</div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium truncate mr-2">Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$12,450</div>
+            <div className="text-xl sm:text-2xl font-bold">$12,450</div>
             <p className="text-xs text-muted-foreground">+12% from last month</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium truncate mr-2">Pending</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-xl sm:text-2xl font-bold">8</div>
             <p className="text-xs text-muted-foreground">Awaiting processing</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Growth</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium truncate mr-2">Growth</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+23%</div>
+            <div className="text-xl sm:text-2xl font-bold">+23%</div>
             <p className="text-xs text-muted-foreground">vs last month</p>
           </CardContent>
         </Card>

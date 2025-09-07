@@ -141,7 +141,7 @@
 @layer components {
   /* Custom component styles */
   .metrics-card {
-    @apply bg-card border border-border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow;
   }
 
   .status-badge {
