@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Mock user role - in real app this would come from auth context
 const currentUserRole = "Admin"; // Super Admin, Admin, Reseller, User
@@ -125,53 +126,55 @@ export function AppSidebar() {
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent className="bg-card border-r border-border">
-        {/* Logo */}
-        <div className="p-3 sm:p-4 border-b border-border">
-          {!collapsed ? (
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
+        <ScrollArea className="h-full">
+          {/* Logo */}
+          <div className="p-3 sm:p-4 border-b border-border">
+            {!collapsed ? (
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
+                </div>
+                <span className="font-semibold text-base sm:text-lg whitespace-nowrap overflow-hidden text-ellipsis">WebHook Panel</span>
               </div>
-              <span className="font-semibold text-base sm:text-lg truncate">WebHook Panel</span>
-            </div>
-          ) : (
-            <div className="flex justify-center">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
+            ) : (
+              <div className="flex justify-center">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <SidebarGroup>
+            <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+              Navigation
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1 p-1 sm:p-2">
+                {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} className={getNavClasses(item.url)}>
+                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        {!collapsed && <span className="text-sm sm:text-base whitespace-nowrap overflow-hidden text-ellipsis">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* User Role Badge */}
+          {!collapsed && (
+            <div className="mt-auto p-4 border-t border-border">
+              <div className="bg-muted rounded-lg p-3">
+                <div className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{currentUserRole}</div>
+                <div className="text-xs text-muted-foreground">Current Role</div>
               </div>
             </div>
           )}
-        </div>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-            Navigation
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1 p-1 sm:p-2">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavClasses(item.url)}>
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!collapsed && <span className="text-sm sm:text-base truncate">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* User Role Badge */}
-        {!collapsed && (
-          <div className="mt-auto p-4 border-t border-border">
-            <div className="bg-muted rounded-lg p-3">
-              <div className="text-sm font-medium text-foreground">{currentUserRole}</div>
-              <div className="text-xs text-muted-foreground">Current Role</div>
-            </div>
-          </div>
-        )}
+        </ScrollArea>
       </SidebarContent>
     </Sidebar>
   );
