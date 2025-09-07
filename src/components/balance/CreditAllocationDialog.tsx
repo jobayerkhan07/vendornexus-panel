@@ -93,7 +93,7 @@ export function CreditAllocationDialog({
             Allocate Credit
           </DialogTitle>
           <DialogDescription>
-            Give negative balance (credit) to allow user to spend before having funds
+            Allocate credit limit to allow user to spend beyond their current balance
           </DialogDescription>
         </DialogHeader>
 
@@ -145,7 +145,7 @@ export function CreditAllocationDialog({
           <Alert>
             <AlertTriangle className="w-4 h-4" />
             <AlertDescription>
-              This amount will be locked in your account until the user repays it through top-ups.
+              Funds will be locked from your account as the user spends beyond their balance.
             </AlertDescription>
           </Alert>
 
@@ -154,13 +154,17 @@ export function CreditAllocationDialog({
             <div className="bg-muted/50 p-3 rounded-lg space-y-2">
               <div className="text-sm font-medium text-foreground">Preview:</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>User new balance:</div>
-                <div className="text-danger font-medium">
-                  ${(user.currentBalance - parseFloat(creditAmount)).toFixed(2)}
+                <div>User balance:</div>
+                <div className="text-success font-medium">
+                  ${user.currentBalance.toFixed(2)} (unchanged)
                 </div>
-                <div>Your locked amount:</div>
-                <div className="text-warning font-medium">
-                  +${parseFloat(creditAmount).toFixed(2)}
+                <div>User credit limit:</div>
+                <div className="text-primary font-medium">
+                  ${(user.creditLimit + parseFloat(creditAmount)).toFixed(2)}
+                </div>
+                <div>User spending power:</div>
+                <div className="text-info font-medium">
+                  ${(user.currentBalance + parseFloat(creditAmount)).toFixed(2)}
                 </div>
                 <div>Your available balance:</div>
                 <div className="text-success font-medium">

@@ -74,7 +74,7 @@ export function TopUpDialog({
             Top Up Balance
           </DialogTitle>
           <DialogDescription>
-            Add funds to your account. Debt will be automatically repaid first.
+            Add funds to your account. Credit debt will be automatically repaid to your creator first.
           </DialogDescription>
         </DialogHeader>
 
@@ -89,7 +89,7 @@ export function TopUpDialog({
             </div>
             {debtAmount > 0 && (
               <div className="flex justify-between text-sm">
-                <span>Outstanding Debt:</span>
+                <span>Credit Debt to Creator:</span>
                 <span className="font-medium text-danger">${debtAmount.toFixed(2)}</span>
               </div>
             )}
@@ -114,10 +114,10 @@ export function TopUpDialog({
             <div className="space-y-3">
               <div className="text-sm font-medium text-foreground">Payment Breakdown:</div>
               
-              {/* Debt Repayment */}
+              {/* Credit Debt Repayment */}
               <div className="bg-danger-light p-3 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Debt Repayment:</span>
+                  <span className="text-sm">Repay Credit to Creator:</span>
                   <span className="font-medium text-danger">${debtRepayment.toFixed(2)}</span>
                 </div>
                 {debtRepayment < debtAmount && (
@@ -163,7 +163,7 @@ export function TopUpDialog({
             <Alert>
               <CheckCircle className="w-4 h-4" />
               <AlertDescription>
-                Your debt will be automatically repaid to your creator when you top up.
+                Your credit debt will be automatically repaid to your creator when you top up.
               </AlertDescription>
             </Alert>
           )}

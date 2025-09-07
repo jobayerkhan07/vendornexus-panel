@@ -124,21 +124,19 @@ export default function BalanceManagement() {
   };
 
   const handleAllocateCredit = (userId: string, amount: number) => {
-    // Update user balance
+    // Update user credit limit only (balance stays the same)
     setUsers(prev => prev.map(user => 
       user.id === userId 
         ? { 
             ...user, 
-            currentBalance: user.currentBalance - amount,
             creditLimit: user.creditLimit + amount
           }
         : user
     ));
 
-    // Update creator balance
+    // Update creator available balance (locked amount increases as user spends)
     setCurrentUser(prev => ({
       ...prev,
-      lockedBalance: prev.lockedBalance + amount,
       availableBalance: prev.availableBalance - amount,
       creditAllocated: prev.creditAllocated + amount
     }));
