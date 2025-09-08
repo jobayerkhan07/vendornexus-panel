@@ -23,6 +23,35 @@ import {
   Settings
 } from 'lucide-react';
 
+// Type definitions
+interface Vendor {
+  id: string;
+  name: string;
+  description?: string;
+  website_url?: string;
+  support_email?: string;
+  support_phone?: string;
+  status: 'active' | 'inactive' | 'testing';
+  configuration: any;
+  created_at: string;
+  updated_at: string;
+}
+
+interface VendorAPI {
+  id: string;
+  vendor_id: string;
+  name: string;
+  endpoint_url: string;
+  api_key_name?: string;
+  authentication_type: string;
+  rate_limit: number;
+  priority: number;
+  is_active: boolean;
+  configuration: any;
+  created_at: string;
+  updated_at: string;
+}
+
 const VendorManagement = () => {
   const { vendors, vendorAPIs, loading, createVendor, updateVendor, deleteVendor, createVendorAPI, testVendorAPI } = useVendors();
   const [selectedVendor, setSelectedVendor] = useState<any>(null);
@@ -103,28 +132,27 @@ const VendorManagement = () => {
 
   const vendorColumns = [
     {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }: any) => (
+      key: 'name' as keyof Vendor,
+      label: 'Name',
+      render: (value: any, row: Vendor) => (
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4 text-muted-foreground" />
-          <span className="font-medium">{row.getValue('name')}</span>
+          <span className="font-medium">{value}</span>
         </div>
       ),
     },
     {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }: any) => getStatusBadge(row.getValue('status')),
+      key: 'status' as keyof Vendor,
+      label: 'Status',
+      render: (value: any) => getStatusBadge(value),
     },
     {
-      accessorKey: 'website_url',
-      header: 'Website',
-      cell: ({ row }: any) => {
-        const url = row.getValue('website_url');
-        return url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-            {url}
+      key: 'website_url' as keyof Vendor,
+      label: 'Website',
+      render: (value: any) => {
+        return value ? (
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            {value}
           </a>
         ) : (
           <span className="text-muted-foreground">-</span>
@@ -132,13 +160,12 @@ const VendorManagement = () => {
       },
     },
     {
-      accessorKey: 'support_email',
-      header: 'Support Email',
-      cell: ({ row }: any) => {
-        const email = row.getValue('support_email');
-        return email ? (
-          <a href={`mailto:${email}`} className="text-primary hover:underline">
-            {email}
+      key: 'support_email' as keyof Vendor,
+      label: 'Support Email',
+      render: (value: any) => {
+        return value ? (
+          <a href={`mailto:${value}`} className="text-primary hover:underline">
+            {value}
           </a>
         ) : (
           <span className="text-muted-foreground">-</span>
@@ -146,14 +173,14 @@ const VendorManagement = () => {
       },
     },
     {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }: any) => (
+      key: 'id' as keyof Vendor,
+      label: 'Actions',
+      render: (value: any, row: Vendor) => (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedVendor(row.original)}>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedVendor(row)}>
             <Edit className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => deleteVendor(row.original.id)}>
+          <Button variant="ghost" size="sm" onClick={() => deleteVendor(row.id)}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -163,50 +190,50 @@ const VendorManagement = () => {
 
   const apiColumns = [
     {
-      accessorKey: 'name',
-      header: 'API Name',
-      cell: ({ row }: any) => (
+      key: 'name' as keyof VendorAPI,
+      label: 'API Name',
+      render: (value: any) => (
         <div className="flex items-center gap-2">
           <Settings className="w-4 h-4 text-muted-foreground" />
-          <span className="font-medium">{row.getValue('name')}</span>
+          <span className="font-medium">{value}</span>
         </div>
       ),
     },
     {
-      accessorKey: 'vendor_id',
-      header: 'Vendor',
-      cell: ({ row }: any) => {
-        const vendor = vendors.find(v => v.id === row.getValue('vendor_id'));
+      key: 'vendor_id' as keyof VendorAPI,
+      label: 'Vendor',
+      render: (value: any) => {
+        const vendor = vendors.find(v => v.id === value);
         return vendor ? vendor.name : 'Unknown';
       },
     },
     {
-      accessorKey: 'endpoint_url',
-      header: 'Endpoint',
-      cell: ({ row }: any) => (
-        <code className="text-xs bg-muted px-2 py-1 rounded">{row.getValue('endpoint_url')}</code>
+      key: 'endpoint_url' as keyof VendorAPI,
+      label: 'Endpoint',
+      render: (value: any) => (
+        <code className="text-xs bg-muted px-2 py-1 rounded">{value}</code>
       ),
     },
     {
-      accessorKey: 'rate_limit',
-      header: 'Rate Limit',
-      cell: ({ row }: any) => `${row.getValue('rate_limit')}/hour`,
+      key: 'rate_limit' as keyof VendorAPI,
+      label: 'Rate Limit',
+      render: (value: any) => `${value}/hour`,
     },
     {
-      accessorKey: 'is_active',
-      header: 'Status',
-      cell: ({ row }: any) => (
-        <Badge variant={row.getValue('is_active') ? 'default' : 'secondary'}>
-          {row.getValue('is_active') ? 'Active' : 'Inactive'}
+      key: 'is_active' as keyof VendorAPI,
+      label: 'Status',
+      render: (value: any) => (
+        <Badge variant={value ? 'default' : 'secondary'}>
+          {value ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },
     {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }: any) => (
+      key: 'id' as keyof VendorAPI,
+      label: 'Actions',
+      render: (value: any, row: VendorAPI) => (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => testVendorAPI(row.original.id)}>
+          <Button variant="ghost" size="sm" onClick={() => testVendorAPI(row.id)}>
             <TestTube className="w-4 h-4" />
           </Button>
           <Button variant="ghost" size="sm">
@@ -379,7 +406,9 @@ const VendorManagement = () => {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                    onValueChange={(value: 'active' | 'inactive' | 'testing') => 
+                      setFormData(prev => ({ ...prev, status: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -421,8 +450,6 @@ const VendorManagement = () => {
               <DataTable
                 columns={vendorColumns}
                 data={vendors}
-                searchKey="name"
-                searchPlaceholder="Search vendors..."
               />
             </CardContent>
           </Card>
@@ -440,8 +467,6 @@ const VendorManagement = () => {
               <DataTable
                 columns={apiColumns}
                 data={vendorAPIs}
-                searchKey="name"
-                searchPlaceholder="Search APIs..."
               />
             </CardContent>
           </Card>
