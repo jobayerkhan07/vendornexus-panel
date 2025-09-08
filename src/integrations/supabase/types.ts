@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      credit_allocations: {
+        Row: {
+          amount: number
+          created_at: string
+          from_user_id: string
+          id: string
+          to_user_id: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          from_user_id: string
+          id?: string
+          to_user_id: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          to_user_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_allocations_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -44,11 +79,109 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          reference_id: string | null
+          related_user_id: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          related_user_id?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          related_user_id?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_balances: {
+        Row: {
+          available_balance: number | null
+          created_at: string
+          credit_limit: number
+          current_balance: number
+          id: string
+          is_locked: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_balance?: number | null
+          created_at?: string
+          credit_limit?: number
+          current_balance?: number
+          id?: string
+          is_locked?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_balance?: number | null
+          created_at?: string
+          credit_limit?: number
+          current_balance?: number
+          id?: string
+          is_locked?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      allocate_credit: {
+        Args: { _amount: number; _from_user_id: string; _to_user_id: string }
+        Returns: string
+      }
+      get_or_create_user_balance: {
+        Args: { _user_id: string }
+        Returns: {
+          available_balance: number | null
+          created_at: string
+          credit_limit: number
+          current_balance: number
+          id: string
+          is_locked: boolean
+          updated_at: string
+          user_id: string
+        }
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -60,9 +193,32 @@ export type Database = {
         }
         Returns: boolean
       }
+      toggle_balance_lock: {
+        Args: { _locked: boolean; _user_id: string }
+        Returns: boolean
+      }
+      update_user_balance: {
+        Args: {
+          _amount: number
+          _created_by?: string
+          _description?: string
+          _related_user_id?: string
+          _transaction_type: Database["public"]["Enums"]["transaction_type"]
+          _user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "reseller" | "user"
+      transaction_status: "pending" | "completed" | "failed" | "cancelled"
+      transaction_type:
+        | "credit_allocation"
+        | "top_up"
+        | "debit"
+        | "refund"
+        | "auto_repayment"
+        | "balance_adjustment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -191,6 +347,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "reseller", "user"],
+      transaction_status: ["pending", "completed", "failed", "cancelled"],
+      transaction_type: [
+        "credit_allocation",
+        "top_up",
+        "debit",
+        "refund",
+        "auto_repayment",
+        "balance_adjustment",
+      ],
     },
   },
 } as const
