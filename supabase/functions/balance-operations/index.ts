@@ -1,14 +1,18 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+interface BalanceOperationRequest {
+  operation: 'top_up' | 'allocate_credit' | 'get_balance' | 'get_transactions' | 'lock_balance';
+  user_id?: string;
+  to_user_id?: string;
+  amount?: number;
+  locked?: boolean;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -17,211 +21,160 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Get the authenticated user
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const authHeader = req.headers.get('Authorization')!;
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verify user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
-      console.error('Auth error:', authError);
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const { operation, ...params } = await req.json();
-    console.log(`Balance operation: ${operation} for user: ${user.id}`);
+    const body: BalanceOperationRequest = await req.json();
+    const { operation } = body;
 
-    let result;
+    console.log(`Balance operation: ${operation} for user: ${user.id}`);
 
     switch (operation) {
       case 'get_balance': {
-        const { data, error } = await supabase
+        const targetUserId = body.user_id || user.id;
+        
+        const { data: balance, error } = await supabase
           .from('user_balances')
           .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
+          .eq('user_id', targetUserId)
+          .single();
 
-        if (error) throw error;
-        
-        // If no balance record exists, create one
-        if (!data) {
-          const { data: newBalance, error: createError } = await supabase
-            .rpc('get_or_create_user_balance', { _user_id: user.id });
-          
-          if (createError) throw createError;
-          result = { balance: newBalance };
-        } else {
-          result = { balance: data };
+        if (error && error.code !== 'PGRST116') {
+          throw error;
         }
-        break;
+
+        // Create balance if doesn't exist
+        if (!balance) {
+          const { data: newBalance, error: insertError } = await supabase
+            .from('user_balances')
+            .insert({
+              user_id: targetUserId,
+              current_balance: 0,
+              credit_limit: 0
+            })
+            .select()
+            .single();
+
+          if (insertError) throw insertError;
+          return new Response(
+            JSON.stringify({ balance: newBalance }), 
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ balance }), 
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       case 'top_up': {
-        const { amount } = params;
-        
-        if (!amount || amount <= 0) {
+        if (!body.amount || body.amount <= 0) {
           throw new Error('Invalid amount');
         }
 
-        const { data, error } = await supabase
-          .rpc('update_user_balance', {
-            _user_id: user.id,
-            _amount: amount,
-            _transaction_type: 'top_up',
-            _description: 'Account top-up',
-            _created_by: user.id
-          });
+        const { data, error } = await supabase.rpc('update_user_balance', {
+          _user_id: user.id,
+          _amount: body.amount,
+          _transaction_type: 'top_up',
+          _description: 'Account top-up',
+          _related_user_id: null,
+          _created_by: user.id
+        });
 
         if (error) throw error;
-        
-        result = { 
-          success: true, 
-          transaction_id: data,
-          message: `Successfully topped up $${amount}` 
-        };
-        break;
+
+        return new Response(
+          JSON.stringify({ success: true, transaction_id: data }), 
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       case 'allocate_credit': {
-        const { to_user_id, amount } = params;
-        
-        if (!to_user_id || !amount || amount <= 0) {
+        if (!body.to_user_id || !body.amount || body.amount <= 0) {
           throw new Error('Invalid parameters');
         }
 
-        // Check if user has permission to allocate credit
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!userProfile || !['admin', 'reseller'].includes(userProfile.role)) {
-          throw new Error('Insufficient permissions to allocate credit');
-        }
-
-        const { data, error } = await supabase
-          .rpc('allocate_credit', {
-            _from_user_id: user.id,
-            _to_user_id: to_user_id,
-            _amount: amount
-          });
+        const { data, error } = await supabase.rpc('allocate_credit', {
+          _from_user_id: user.id,
+          _to_user_id: body.to_user_id,
+          _amount: body.amount
+        });
 
         if (error) throw error;
-        
-        result = { 
-          success: true, 
-          allocation_id: data,
-          message: `Successfully allocated $${amount} credit` 
-        };
-        break;
+
+        return new Response(
+          JSON.stringify({ success: true, allocation_id: data }), 
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       case 'get_transactions': {
-        const { limit = 50, offset = 0 } = params;
+        const targetUserId = body.user_id || user.id;
         
-        const { data, error } = await supabase
+        const { data: transactions, error } = await supabase
           .from('transactions')
           .select(`
             *,
-            related_user:related_user_id (
-              email
-            )
+            related_user:related_user_id(email),
+            creator:created_by(email)
           `)
-          .eq('user_id', user.id)
+          .eq('user_id', targetUserId)
           .order('created_at', { ascending: false })
-          .range(offset, offset + limit - 1);
+          .limit(50);
 
         if (error) throw error;
-        
-        result = { transactions: data };
-        break;
+
+        return new Response(
+          JSON.stringify({ transactions }), 
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       case 'lock_balance': {
-        const { target_user_id, locked } = params;
-        
-        // Check if user is admin
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!userProfile || userProfile.role !== 'admin') {
-          throw new Error('Admin access required');
+        if (!body.user_id) {
+          throw new Error('User ID required');
         }
 
-        const { data, error } = await supabase
-          .rpc('toggle_balance_lock', {
-            _user_id: target_user_id,
-            _locked: locked
-          });
+        const { data, error } = await supabase.rpc('toggle_balance_lock', {
+          _user_id: body.user_id,
+          _locked: body.locked ?? true
+        });
 
         if (error) throw error;
-        
-        result = { 
-          success: true, 
-          message: `Balance ${locked ? 'locked' : 'unlocked'} successfully` 
-        };
-        break;
-      }
 
-      case 'get_user_balances': {
-        // For admins and resellers to view multiple user balances
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!userProfile || !['admin', 'reseller'].includes(userProfile.role)) {
-          throw new Error('Insufficient permissions');
-        }
-
-        let query = supabase
-          .from('user_balances')
-          .select(`
-            *,
-            profile:user_id (
-              email,
-              role
-            )
-          `);
-
-        // Resellers can only see users they created
-        if (userProfile.role === 'reseller') {
-          query = query.eq('profile.created_by', user.id);
-        }
-
-        const { data, error } = await query.order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        result = { balances: data };
-        break;
+        return new Response(
+          JSON.stringify({ success: true, locked: body.locked }), 
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       default:
-        throw new Error(`Unknown operation: ${operation}`);
+        throw new Error('Invalid operation');
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
   } catch (error) {
-    console.error('Balance operation error:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message || 'Internal server error' 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error in balance-operations function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 });
