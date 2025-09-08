@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
@@ -34,117 +36,157 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <ImpersonationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/register" element={<Register />} />
-            
-            {/* Protected Routes */}
-            <Route path="/" element={
-              <AppLayout>
-                <Dashboard />
-              </AppLayout>
-            } />
-            <Route path="/profile" element={
-              <AppLayout>
-                <Profile />
-              </AppLayout>
-            } />
-            <Route path="/settings" element={
-              <AppLayout>
-                <Settings />
-              </AppLayout>
-            } />
-            <Route path="/user-roles" element={
-              <AppLayout>
-                <UserRoles />
-              </AppLayout>
-            } />
-            <Route path="/permission-groups" element={
-              <AppLayout>
-                <PermissionGroups />
-              </AppLayout>
-            } />
-            <Route path="/user-permissions" element={
-              <AppLayout>
-                <UserPermissions />
-              </AppLayout>
-            } />
-            <Route path="/system-permissions" element={
-              <AppLayout>
-                <SystemPermissions />
-              </AppLayout>
-            } />
-            <Route path="/users/create" element={
-              <AppLayout>
-                <CreateUser />
-              </AppLayout>
-            } />
-            <Route path="/balance" element={
-              <AppLayout>
-                <BalanceManagement />
-              </AppLayout>
-            } />
-            <Route path="/sell-price-groups" element={
-              <AppLayout>
-                <SellPriceGroups />
-              </AppLayout>
-            } />
-            <Route path="/users" element={
-              <AppLayout>
-                <Users />
-              </AppLayout>
-            } />
-            <Route path="/vendors" element={
-              <AppLayout>
-                <Vendors />
-              </AppLayout>
-            } />
-            <Route path="/number-pool" element={
-              <AppLayout>
-                <NumberPool />
-              </AppLayout>
-            } />
-            <Route path="/vendor-apis" element={
-              <AppLayout>
-                <VendorAPIs />
-              </AppLayout>
-            } />
-            <Route path="/payments" element={
-              <AppLayout>
-                <PaymentGateway />
-              </AppLayout>
-            } />
-            <Route path="/smtp" element={
-              <AppLayout>
-                <SMTP />
-              </AppLayout>
-            } />
-            <Route path="/campaigns" element={
-              <AppLayout>
-                <Campaigns />
-              </AppLayout>
-            } />
-            <Route path="/sms" element={
-              <AppLayout>
-                <SMS />
-              </AppLayout>
-            } />
-            <Route path="/reports" element={
-              <AppLayout>
-                <Reports />
-              </AppLayout>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ImpersonationProvider>
+      <AuthProvider>
+        <ImpersonationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+            <Routes>
+              {/* Auth Routes */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+              
+              {/* Protected Routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Profile />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/user-roles" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AppLayout>
+                    <UserRoles />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/permission-groups" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AppLayout>
+                    <PermissionGroups />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/user-permissions" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AppLayout>
+                    <UserPermissions />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/system-permissions" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AppLayout>
+                    <SystemPermissions />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/users/create" element={
+                <ProtectedRoute requiredRole={['admin', 'reseller']}>
+                  <AppLayout>
+                    <CreateUser />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/balance" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <BalanceManagement />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/sell-price-groups" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AppLayout>
+                    <SellPriceGroups />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/users" element={
+                <ProtectedRoute requiredRole={['admin', 'reseller']}>
+                  <AppLayout>
+                    <Users />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/vendors" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AppLayout>
+                    <Vendors />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/number-pool" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <NumberPool />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/vendor-apis" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AppLayout>
+                    <VendorAPIs />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/payments" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PaymentGateway />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/smtp" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SMTP />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/campaigns" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Campaigns />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/sms" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SMS />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/reports" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Reports />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ImpersonationProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
