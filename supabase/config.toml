@@ -1,1 +1,4 @@
 project_id = "xhmqktthewxcrhxibpsn"
+
+[functions.balance-operations]
+verify_jwt = true
