@@ -37,12 +37,25 @@ export function usePermissions(): UserPermissions {
         return;
       }
 
-      // Get default permissions for role
-      const rolePermissions = DEFAULT_ROLE_PERMISSIONS[userProfile.role as keyof typeof DEFAULT_ROLE_PERMISSIONS] || [];
+      // First try to get user-specific permission groups
+      const { data: userPermissionGroups, error: userGroupError } = await supabase
+        .from('user_permission_groups')
+        .select(`
+          permission_groups(permissions)
+        `)
+        .eq('user_id', user?.id);
+
+      if (!userGroupError && userPermissionGroups && userPermissionGroups.length > 0) {
+        // Flatten all permissions from user's assigned groups
+        const allPermissions = userPermissionGroups
+          .flatMap(upg => (upg.permission_groups as any)?.permissions || []);
+        setPermissions([...new Set(allPermissions)]); // Remove duplicates
+      } else {
+        // Fall back to default role permissions
+        const rolePermissions = DEFAULT_ROLE_PERMISSIONS[userProfile.role as keyof typeof DEFAULT_ROLE_PERMISSIONS] || [];
+        setPermissions(rolePermissions);
+      }
       
-      // TODO: In future, fetch user-specific permissions from permission_groups table
-      // For now, use default role permissions
-      setPermissions(rolePermissions);
       setLoading(false);
     } catch (error) {
       console.error('Error loading user permissions:', error);

@@ -37,7 +37,7 @@ const getRoleColor = (role: UserRole) => {
     case "super_admin": return "bg-gradient-to-r from-purple-500 to-pink-500";
     case "admin": return "bg-gradient-to-r from-blue-500 to-cyan-500";
     case "reseller": return "bg-gradient-to-r from-green-500 to-emerald-500";
-    case "client": return "bg-gradient-to-r from-orange-500 to-yellow-500";
+    case "user": return "bg-gradient-to-r from-orange-500 to-yellow-500";
     default: return "bg-muted";
   }
 };
@@ -157,7 +157,7 @@ export default function SystemPermissions() {
                 <SelectItem value="super_admin">Super Admin</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="reseller">Reseller</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
+                <SelectItem value="user">User</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex items-center space-x-2">

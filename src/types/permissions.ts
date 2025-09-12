@@ -19,7 +19,7 @@ export interface PermissionGroup {
   isDefault: boolean;
 }
 
-export type UserRole = 'super_admin' | 'admin' | 'reseller' | 'client';
+export type UserRole = 'super_admin' | 'admin' | 'reseller' | 'user';
 
 export interface UserProfile {
   id: string;
@@ -148,7 +148,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     // Reports (2/8)
     'reports.view', 'analytics.view',
   ], // 20 permissions
-  client: [
+  user: [
     // SMS Services (4/10)
     'sms.send', 'sms.templates', 'sms.history', 'sms.api',
     // Number Pool (2/8)

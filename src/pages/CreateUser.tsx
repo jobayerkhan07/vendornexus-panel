@@ -79,7 +79,7 @@ const mockPermissionGroups: PermissionGroup[] = [
   {
     id: "1",
     name: "Reseller Standard",
-    description: "Standard reseller permissions with client management",
+    description: "Standard reseller permissions with user management",
     targetRole: "reseller",
     permissions: ["users.view", "users.create", "sms.send", "sms.bulk", "reports.view"],
     createdBy: "super-admin",
@@ -88,9 +88,9 @@ const mockPermissionGroups: PermissionGroup[] = [
   },
   {
     id: "2",
-    name: "Client Basic",
-    description: "Basic client access to SMS services",
-    targetRole: "client",
+    name: "User Basic",
+    description: "Basic user access to SMS services",
+    targetRole: "user",
     permissions: ["sms.send", "sms.templates", "sms.history", "reports.view"],
     createdBy: "admin-1",
     createdAt: "2024-01-20",
@@ -209,7 +209,7 @@ export default function CreateUser() {
                 <SelectItem value="super_admin">Super Admin</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="reseller">Reseller</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
+                <SelectItem value="user">User</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -271,7 +271,7 @@ export default function CreateUser() {
         </div>
 
         {/* Vendor Selection */}
-        {(formData.role === "reseller" || formData.role === "client") && (
+        {(formData.role === "reseller" || formData.role === "user") && (
           <div className="space-y-4 p-4 sm:p-6 bg-muted/30 rounded-lg border border-border">
             <h3 className="text-base sm:text-lg font-semibold text-foreground">Vendor Access & Pricing</h3>
             

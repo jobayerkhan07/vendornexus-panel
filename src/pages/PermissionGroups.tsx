@@ -27,7 +27,7 @@ const mockPermissionGroups: PermissionGroup[] = [
   {
     id: "2", 
     name: "Reseller Basic",
-    description: "Basic reseller permissions for client management",
+    description: "Basic reseller permissions for user management",
     targetRole: "reseller",
     permissions: ["users.view", "users.create", "sms.send", "reports.view"],
     createdBy: "super-admin",
@@ -36,9 +36,9 @@ const mockPermissionGroups: PermissionGroup[] = [
   },
   {
     id: "3",
-    name: "Client SMS Only",
-    description: "Client access limited to SMS services only",
-    targetRole: "client", 
+    name: "User SMS Only",
+    description: "User access limited to SMS services only",
+    targetRole: "user",
     permissions: ["sms.send", "sms.templates", "sms.history"],
     createdBy: "admin-1",
     createdAt: "2024-01-20",
@@ -53,22 +53,22 @@ const getRoleColor = (role: UserRole) => {
     case "super_admin": return "bg-gradient-to-r from-purple-500 to-pink-500";
     case "admin": return "bg-gradient-to-r from-blue-500 to-cyan-500";
     case "reseller": return "bg-gradient-to-r from-green-500 to-emerald-500";
-    case "client": return "bg-gradient-to-r from-orange-500 to-yellow-500";
+    case "user": return "bg-gradient-to-r from-orange-500 to-yellow-500";
     default: return "bg-muted";
   }
 };
 
 const canManageRole = (targetRole: UserRole): boolean => {
   if (currentUserRole === "super_admin") return true;
-  if (currentUserRole === "admin" && (targetRole === "reseller" || targetRole === "client")) return true;
-  if (currentUserRole === "reseller" && targetRole === "client") return true;
+  if (currentUserRole === "admin" && (targetRole === "reseller" || targetRole === "user")) return true;
+  if (currentUserRole === "reseller" && targetRole === "user") return true;
   return false;
 };
 
 const getAvailableRoles = (): UserRole[] => {
-  if (currentUserRole === "super_admin") return ["admin", "reseller", "client"];
-  if (currentUserRole === "admin") return ["reseller", "client"];
-  if (currentUserRole === "reseller") return ["client"];
+  if (currentUserRole === "super_admin") return ["admin", "reseller", "user"];
+  if (currentUserRole === "admin") return ["reseller", "user"];
+  if (currentUserRole === "reseller") return ["user"];
   return [];
 };
 
