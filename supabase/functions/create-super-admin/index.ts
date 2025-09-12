@@ -84,23 +84,22 @@ serve(async (req) => {
       )
     }
 
-    // Create profile with super_admin role
+    // Update the automatically created profile to super_admin role
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        user_id: authData.user.id,
-        email: email,
+      .update({
         role: 'super_admin',
         full_name: fullName || 'Super Admin',
         status: 'active'
       })
+      .eq('user_id', authData.user.id)
 
     if (profileError) {
-      // Clean up auth user if profile creation fails
+      // Clean up auth user if profile update fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       
       return new Response(
-        JSON.stringify({ error: `Failed to create profile: ${profileError.message}` }),
+        JSON.stringify({ error: `Failed to update profile: ${profileError.message}` }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
