@@ -141,15 +141,6 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
-              <Link
-                to="/auth/register"
-                className="text-primary hover:underline font-medium"
-              >
-                Create Account
-              </Link>
-            </div>
           </CardContent>
         </Card>
 

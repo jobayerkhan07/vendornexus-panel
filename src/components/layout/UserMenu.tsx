@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { LogOut, Settings, User, Shield } from "lucide-react"
+import { LogOut, Settings, User, Shield, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -18,9 +18,10 @@ import { supabase } from "@/integrations/supabase/client"
 interface UserMenuProps {
   user?: {
     email: string
-    role: "admin" | "reseller" | "user"
+    role: "super_admin" | "admin" | "reseller" | "user"
     display_name?: string
     avatar_url?: string
+    balance?: number
   }
 }
 
@@ -81,27 +82,33 @@ export function UserMenu({ user }: UserMenuProps) {
             Sign In
           </Button>
         </Link>
-        <Link to="/auth/register">
-          <Button size="sm">
-            Sign Up
-          </Button>
-        </Link>
       </div>
     )
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar_url} alt={user.display_name || user.email} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {getInitials(user.email)}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
+    <div className="flex items-center gap-3">
+      {/* Balance Display for non-super-admin users */}
+      {user.role !== "super_admin" && (
+        <div className="flex items-center gap-2 px-3 py-1 bg-secondary rounded-full">
+          <Wallet className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">
+            ${(user.balance || 0).toFixed(2)}
+          </span>
+        </div>
+      )}
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user.avatar_url} alt={user.display_name || user.email} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {getInitials(user.email)}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-popover border border-border shadow-md" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-2">
@@ -147,5 +154,6 @@ export function UserMenu({ user }: UserMenuProps) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   )
 }
