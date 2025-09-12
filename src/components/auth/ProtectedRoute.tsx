@@ -14,6 +14,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   useEffect(() => {
     if (!loading && !user) {
+      console.log('No user found, redirecting to login...');
       navigate('/auth/login');
     }
   }, [user, loading, navigate]);
