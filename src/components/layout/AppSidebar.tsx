@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Users, UserCog, DollarSign, Building2, Phone, 
@@ -19,16 +18,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 
-// Mock user role - in real app this would come from auth context
-const currentUserRole = "Admin"; // Super Admin, Admin, Reseller, User
-
-const getMenuItems = (role: string) => {
+const getMenuItems = (role: string, hasPermission: (permission: string) => boolean) => {
   const baseItems = [];
 
-  if (role === "Super Admin") {
+  // Dashboard - always available
+  baseItems.push({ title: "Dashboard", url: "/", icon: BarChart3 });
+
+  if (role === "super_admin") {
+    // Super admin has access to everything
     baseItems.push(
-      { title: "Dashboard", url: "/", icon: BarChart3 },
       { title: "User Roles", url: "/user-roles", icon: Shield },
       { title: "Permission Groups", url: "/permission-groups", icon: UserX },
       { title: "User Permissions", url: "/user-permissions", icon: Key },
@@ -44,60 +45,74 @@ const getMenuItems = (role: string) => {
       { title: "SMTP", url: "/smtp", icon: Mail },
       { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
       { title: "SMS", url: "/sms", icon: MessageSquare },
-      { title: "Reports", url: "/reports", icon: BarChart3 },
-      { title: "Profile", url: "/profile", icon: User },
-      { title: "Settings", url: "/settings", icon: Settings }
+      { title: "Reports", url: "/reports", icon: BarChart3 }
     );
-  } else if (role === "Admin") {
-    baseItems.push(
-      { title: "Dashboard", url: "/", icon: BarChart3 },
-      { title: "User Roles", url: "/user-roles", icon: Shield },
-      { title: "Permission Groups", url: "/permission-groups", icon: UserX },
-      { title: "User Permissions", url: "/user-permissions", icon: Key },
-      { title: "System Permissions", url: "/system-permissions", icon: Database },
-      { title: "Users", url: "/users", icon: Users },
-      { title: "Create User", url: "/users/create", icon: UserCog },
-      { title: "Balance Management", url: "/balance", icon: Wallet },
-      { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
-      { title: "Vendors", url: "/vendors", icon: Building2 },
-      { title: "Number Pool", url: "/number-pool", icon: Phone },
-      { title: "Vendor APIs", url: "/vendor-apis", icon: Globe },
-      { title: "Payment Gateway", url: "/payments", icon: CreditCard },
-      { title: "SMTP", url: "/smtp", icon: Mail },
-      { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
-      { title: "SMS", url: "/sms", icon: MessageSquare },
-      { title: "Reports", url: "/reports", icon: BarChart3 },
-      { title: "Profile", url: "/profile", icon: User },
-      { title: "Settings", url: "/settings", icon: Settings }
-    );
-  } else if (role === "Reseller") {
-    baseItems.push(
-      { title: "Dashboard", url: "/", icon: BarChart3 },
-      { title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign },
-      { title: "Permission Groups", url: "/permission-groups", icon: UserX },
-      { title: "Users", url: "/users", icon: Users },
-      { title: "Balance Management", url: "/balance", icon: Wallet },
-      { title: "Vendors", url: "/vendors", icon: Building2 },
-      { title: "Number Pool", url: "/number-pool", icon: Phone },
-      { title: "Vendor APIs", url: "/vendor-apis", icon: Globe },
-      { title: "SMTP", url: "/smtp", icon: Mail },
-      { title: "Campaigns", url: "/campaigns", icon: MessageSquare },
-      { title: "SMS", url: "/sms", icon: MessageSquare },
-      { title: "Reports", url: "/reports", icon: BarChart3 },
-      { title: "Profile", url: "/profile", icon: User },
-      { title: "Settings", url: "/settings", icon: Settings }
-    );
-  } else { // User/Client
-    baseItems.push(
-      { title: "Dashboard", url: "/", icon: BarChart3 },
-      { title: "Number Pool", url: "/number-pool", icon: Phone },
-      { title: "Vendor APIs", url: "/vendor-apis", icon: Globe },
-      { title: "SMS", url: "/sms", icon: MessageSquare },
-      { title: "Reports", url: "/reports", icon: BarChart3 },
-      { title: "Profile", url: "/profile", icon: User },
-      { title: "Settings", url: "/settings", icon: Settings }
-    );
+  } else {
+    // Permission-based menu items for other roles
+    if (hasPermission('role_management')) {
+      baseItems.push({ title: "User Roles", url: "/user-roles", icon: Shield });
+    }
+    
+    if (hasPermission('permission_management')) {
+      baseItems.push(
+        { title: "Permission Groups", url: "/permission-groups", icon: UserX },
+        { title: "User Permissions", url: "/user-permissions", icon: Key },
+        { title: "System Permissions", url: "/system-permissions", icon: Database }
+      );
+    }
+    
+    if (hasPermission('user_management')) {
+      baseItems.push(
+        { title: "Users", url: "/users", icon: Users },
+        { title: "Create User", url: "/users/create", icon: UserCog }
+      );
+    }
+    
+    if (hasPermission('balance_management')) {
+      baseItems.push({ title: "Balance Management", url: "/balance", icon: Wallet });
+    }
+    
+    if (hasPermission('pricing_management')) {
+      baseItems.push({ title: "Sell Price Groups", url: "/sell-price-groups", icon: DollarSign });
+    }
+    
+    if (hasPermission('vendor_management')) {
+      baseItems.push(
+        { title: "Vendors", url: "/vendors", icon: Building2 },
+        { title: "Vendor APIs", url: "/vendor-apis", icon: Globe }
+      );
+    }
+    
+    if (hasPermission('number_management')) {
+      baseItems.push({ title: "Number Pool", url: "/number-pool", icon: Phone });
+    }
+    
+    if (hasPermission('payment_management')) {
+      baseItems.push({ title: "Payment Gateway", url: "/payments", icon: CreditCard });
+    }
+    
+    if (hasPermission('smtp_management')) {
+      baseItems.push({ title: "SMTP", url: "/smtp", icon: Mail });
+    }
+    
+    if (hasPermission('campaign_management')) {
+      baseItems.push({ title: "Campaigns", url: "/campaigns", icon: MessageSquare });
+    }
+    
+    if (hasPermission('sms_management')) {
+      baseItems.push({ title: "SMS", url: "/sms", icon: MessageSquare });
+    }
+    
+    if (hasPermission('reporting')) {
+      baseItems.push({ title: "Reports", url: "/reports", icon: BarChart3 });
+    }
   }
+
+  // Always available
+  baseItems.push(
+    { title: "Profile", url: "/profile", icon: User },
+    { title: "Settings", url: "/settings", icon: Settings }
+  );
 
   return baseItems;
 };
@@ -106,8 +121,10 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
   
-  const menuItems = getMenuItems(currentUserRole);
+  const menuItems = getMenuItems(userProfile?.role || 'user', hasPermission);
   const collapsed = state === "collapsed";
   
   const isActive = (path: string) => {
@@ -166,11 +183,15 @@ export function AppSidebar() {
           </SidebarGroup>
 
           {/* User Role Badge */}
-          {!collapsed && (
+          {!collapsed && userProfile && (
             <div className="mt-auto p-4 border-t border-border">
               <div className="bg-muted rounded-lg p-3">
-                <div className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{currentUserRole}</div>
-                <div className="text-xs text-muted-foreground">Current Role</div>
+                <div className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+                  {userProfile.full_name || userProfile.email}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {userProfile.role.replace('_', ' ').toUpperCase()}
+                </div>
               </div>
             </div>
           )}

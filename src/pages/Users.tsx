@@ -3,58 +3,14 @@ import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Edit, Trash2, DollarSign, UserCheck, Wallet } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data
-const mockUsers = [
-  {
-    id: "1",
-    email: "john.doe@example.com",
-    name: "John Doe",
-    role: "User",
-    status: "active",
-    balance: 150.75,
-    lastActive: "2024-01-15",
-    smsCount: 245,
-    priceGroup: "Standard"
-  },
-  {
-    id: "2",
-    email: "jane.smith@example.com", 
-    name: "Jane Smith",
-    role: "Reseller",
-    status: "active",
-    balance: 2450.00,
-    lastActive: "2024-01-14",
-    smsCount: 1024,
-    priceGroup: "Premium"
-  },
-  {
-    id: "3",
-    email: "mike.johnson@example.com",
-    name: "Mike Johnson", 
-    role: "User",
-    status: "suspended",
-    balance: -25.50,
-    lastActive: "2024-01-10",
-    smsCount: 89,
-    priceGroup: "Basic"
-  },
-  {
-    id: "4",
-    email: "sarah.wilson@example.com",
-    name: "Sarah Wilson",
-    role: "User", 
-    status: "active",
-    balance: 89.25,
-    lastActive: "2024-01-15",
-    smsCount: 156,
-    priceGroup: "Standard"
-  }
-];
+import { useUsers } from "@/hooks/useUsers";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -62,13 +18,27 @@ export default function Users() {
   const itemsPerPage = 10;
   const { startImpersonation } = useImpersonation();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const { user, userProfile } = useAuth();
+  const { users, stats, loading, refresh } = useUsers();
+  const { canImpersonate } = usePermissions();
 
-  const handleImpersonate = (targetUser: any) => {
+  const handleImpersonate = async (targetUser: any) => {
+    if (!user || !userProfile) return;
+    
+    const canImpersonateUser = await canImpersonate(targetUser.id);
+    if (!canImpersonateUser) {
+      toast({
+        title: "Permission denied",
+        description: "You don't have permission to impersonate this user",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const currentUser = {
-      id: "current-user-id",
-      email: "admin@example.com",
-      role: "admin"
+      id: user.id,
+      email: userProfile.email,
+      role: userProfile.role
     };
     
     startImpersonation(currentUser, targetUser);
@@ -121,14 +91,17 @@ export default function Users() {
         >
           <DollarSign className="w-4 h-4" />
         </Button>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => handleImpersonate(row)}
-          className="h-8 w-8 p-0 text-primary hover:text-primary"
-        >
-          <UserCheck className="w-4 h-4" />
-        </Button>
+        {/* Only show impersonate if user has permission */}
+        {(userProfile?.role === 'super_admin' || row.created_by === user?.id) && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleImpersonate(row)}
+            className="h-8 w-8 p-0 text-primary hover:text-primary"
+          >
+            <UserCheck className="w-4 h-4" />
+          </Button>
+        )}
         <Button 
           variant="ghost" 
           size="sm"
@@ -142,14 +115,22 @@ export default function Users() {
   };
 
   const userColumns = [
-    { key: "name" as const, label: "Name" },
+    { 
+      key: "full_name" as const, 
+      label: "Name",
+      render: (value: string | null) => value || "N/A"
+    },
     { key: "email" as const, label: "Email" },
     { 
       key: "role" as const, 
       label: "Role",
       render: (value: string) => (
-        <Badge variant={value === "Admin" ? "default" : value === "Reseller" ? "secondary" : "outline"}>
-          {value}
+        <Badge variant={
+          value === "super_admin" ? "default" : 
+          value === "admin" ? "secondary" : 
+          value === "reseller" ? "outline" : "outline"
+        }>
+          {value.replace('_', ' ').toUpperCase()}
         </Badge>
       )
     },
@@ -170,13 +151,19 @@ export default function Users() {
       label: "Balance",
       render: (value: number) => (
         <span className={`font-medium ${value < 0 ? "text-danger" : "text-foreground"}`}>
-          ${value.toFixed(2)}
+          ${value?.toFixed(2) || '0.00'}
         </span>
       )
     },
     { key: "smsCount" as const, label: "SMS Count" },
-    { key: "priceGroup" as const, label: "Price Group" },
-    { key: "lastActive" as const, label: "Last Active" },
+    { 
+      key: "last_login" as const, 
+      label: "Last Login",
+      render: (value: string | null) => {
+        if (!value) return "Never";
+        return new Date(value).toLocaleDateString();
+      }
+    },
     {
       key: "actions" as const,
       label: "Actions",
@@ -186,12 +173,35 @@ export default function Users() {
     }
   ];
 
-  const filteredUsers = mockUsers.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredUsers = users.filter(user =>
+    (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  if (loading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <Skeleton className="h-8 w-32 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20" />
+          ))}
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -220,19 +230,19 @@ export default function Users() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
-          <div className="text-xl sm:text-2xl font-bold text-foreground">1,247</div>
+          <div className="text-xl sm:text-2xl font-bold text-foreground">{stats.total}</div>
           <div className="text-xs sm:text-sm text-muted-foreground">Total Users</div>
         </div>
         <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
-          <div className="text-xl sm:text-2xl font-bold text-success">1,198</div>
+          <div className="text-xl sm:text-2xl font-bold text-success">{stats.active}</div>
           <div className="text-xs sm:text-sm text-muted-foreground">Active Users</div>
         </div>
         <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
-          <div className="text-xl sm:text-2xl font-bold text-warning">43</div>
+          <div className="text-xl sm:text-2xl font-bold text-warning">{stats.suspended}</div>
           <div className="text-xs sm:text-sm text-muted-foreground">Suspended</div>
         </div>
         <div className="bg-card rounded-lg border border-border p-3 sm:p-4">
-          <div className="text-xl sm:text-2xl font-bold text-primary">156</div>
+          <div className="text-xl sm:text-2xl font-bold text-primary">{stats.resellers}</div>
           <div className="text-xs sm:text-sm text-muted-foreground">Resellers</div>
         </div>
       </div>
