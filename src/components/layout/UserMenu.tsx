@@ -65,6 +65,8 @@ export function UserMenu({ user }: UserMenuProps) {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
+      case "super_admin":
+        return "destructive"
       case "admin":
         return "default"
       case "reseller":
@@ -114,11 +116,11 @@ export function UserMenu({ user }: UserMenuProps) {
           <div className="flex flex-col space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium leading-none">
-                {user.display_name || "User"}
+                {user.display_name || user.email}
               </p>
               <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
                 <Shield className="w-3 h-3 mr-1" />
-                {user.role}
+                {user.role.replace('_', ' ').toUpperCase()}
               </Badge>
             </div>
             <p className="text-xs leading-none text-muted-foreground">

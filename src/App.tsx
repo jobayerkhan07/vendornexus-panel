@@ -70,35 +70,35 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/user-roles" element={
-                <ProtectedRoute requiredRole={['admin']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin']}>
                   <AppLayout>
                     <UserRoles />
                   </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/permission-groups" element={
-                <ProtectedRoute requiredRole={['admin']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin']}>
                   <AppLayout>
                     <PermissionGroups />
                   </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/user-permissions" element={
-                <ProtectedRoute requiredRole={['admin']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin']}>
                   <AppLayout>
                     <UserPermissions />
                   </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/system-permissions" element={
-                <ProtectedRoute requiredRole={['admin']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin']}>
                   <AppLayout>
                     <SystemPermissions />
                   </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/users/create" element={
-                <ProtectedRoute requiredRole={['admin', 'reseller']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin', 'reseller']}>
                   <AppLayout>
                     <CreateUser />
                   </AppLayout>
@@ -112,21 +112,21 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/sell-price-groups" element={
-                <ProtectedRoute requiredRole={['admin']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin']}>
                   <AppLayout>
                     <SellPriceGroups />
                   </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/users" element={
-                <ProtectedRoute requiredRole={['admin', 'reseller']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin', 'reseller']}>
                   <AppLayout>
                     <Users />
                   </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/vendors" element={
-                <ProtectedRoute requiredRole={['admin']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin']}>
                   <AppLayout>
                     <Vendors />
                   </AppLayout>
@@ -140,7 +140,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/vendor-apis" element={
-                <ProtectedRoute requiredRole={['admin']}>
+                <ProtectedRoute requiredRole={['super_admin', 'admin']}>
                   <AppLayout>
                     <VendorAPIs />
                   </AppLayout>

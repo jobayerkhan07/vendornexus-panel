@@ -3,54 +3,22 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [user, setUser] = useState<any>(null);
+  const { user, userProfile } = useAuth();
 
-  useEffect(() => {
-    // For demo purposes, set a mock user to simulate being logged in
-    // In real app, this would come from Supabase auth
-    const mockUser = {
-      email: "admin@example.com",
-      role: "admin" as const,
-      display_name: "Admin User",
-      avatar_url: undefined
-    };
-    setUser(mockUser);
-
-    // Commented out real auth for demo
-    // supabase.auth.getUser().then(({ data: { user } }) => {
-    //   if (user) {
-    //     setUser({
-    //       email: user.email || "",
-    //       role: "admin",
-    //       display_name: user.user_metadata?.display_name,
-    //       avatar_url: user.user_metadata?.avatar_url
-    //     });
-    //   }
-    // });
-
-    // const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-    //   if (session?.user) {
-    //     setUser({
-    //       email: session.user.email || "",
-    //       role: "admin",
-    //       display_name: session.user.user_metadata?.display_name,
-    //       avatar_url: session.user.user_metadata?.avatar_url
-    //     });
-    //   } else {
-    //     setUser(null);
-    //   }
-    // });
-
-    // return () => subscription.unsubscribe();
-  }, []);
+  const userMenuData = user && userProfile ? {
+    email: userProfile.email,
+    role: userProfile.role,
+    display_name: userProfile.full_name,
+    avatar_url: userProfile.avatar_url,
+    balance: 0 // This will be fetched from balance hook when needed
+  } : undefined;
 
   return (
     <SidebarProvider>
@@ -66,13 +34,13 @@ export function AppLayout({ children }: AppLayoutProps) {
               <h1 className="text-lg sm:text-xl font-semibold text-foreground hidden xs:block">SMS Reseller Portal</h1>
               <h1 className="text-base font-semibold text-foreground xs:hidden">SRP</h1>
               <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
-                {user && (
+                {userProfile && (
                   <div className="hidden lg:block text-sm text-muted-foreground">
-                    Welcome back, <span className="font-medium text-foreground">{user.display_name || "User"}</span>
+                    Welcome back, <span className="font-medium text-foreground">{userProfile.full_name || userProfile.email}</span>
                   </div>
                 )}
                 <ThemeToggle />
-                <UserMenu user={user} />
+                <UserMenu user={userMenuData} />
               </div>
             </div>
           </header>

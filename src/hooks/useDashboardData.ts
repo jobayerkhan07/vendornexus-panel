@@ -139,36 +139,59 @@ export function useDashboardData(): DashboardData {
 
   const loadRecentActivity = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch recent transactions
+      const { data: transactions, error: transactionError } = await supabase
         .from('transactions')
         .select(`
           id,
-          amount,
           transaction_type,
-          description,
+          amount,
           created_at,
+          description,
           status,
-          user_id,
-          profiles!inner(email, full_name)
+          user_id
         `)
         .order('created_at', { ascending: false })
         .limit(10);
       
-      if (error) throw error;
+      if (transactionError) throw transactionError;
       
-      const formattedActivity: RecentActivity[] = data?.map(t => ({
-        id: t.id,
-        user: (t.profiles as any)?.email || 'Unknown User',
-        action: getActionLabel(t.transaction_type),
-        details: t.description || 'Transaction',
-        amount: `$${Number(t.amount).toFixed(2)}`,
-        timestamp: formatTimestamp(t.created_at),
-        status: t.status
-      })) || [];
+      if (!transactions || transactions.length === 0) {
+        setRecentActivity([]);
+        return;
+      }
+      
+      // Get unique user IDs
+      const userIds = [...new Set(transactions.map(t => t.user_id))];
+      
+      // Fetch user profiles
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, email, full_name')
+        .in('user_id', userIds);
+      
+      if (profileError) throw profileError;
+      
+      // Create a map for quick profile lookup
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      
+      const formattedActivity: RecentActivity[] = transactions.map(t => {
+        const profile = profileMap.get(t.user_id);
+        return {
+          id: t.id,
+          user: profile?.email || 'Unknown User',
+          action: getActionLabel(t.transaction_type),
+          details: t.description || 'Transaction',
+          amount: `$${Number(t.amount).toFixed(2)}`,
+          timestamp: formatTimestamp(t.created_at),
+          status: t.status
+        };
+      });
       
       setRecentActivity(formattedActivity);
     } catch (error) {
       console.error('Error loading recent activity:', error);
+      setRecentActivity([]); // Set empty array on error to prevent infinite loading
     }
   };
 
